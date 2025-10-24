@@ -10,7 +10,7 @@ import scala.io.StdIn._
   else
     newdeckSize = deckSize * 4
     println("test")
-    println("test2")
+    println("hallo")
 
 
   println(newdeckSize)
