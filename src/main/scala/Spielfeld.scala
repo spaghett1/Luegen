@@ -11,7 +11,6 @@ import scala.io.StdIn._
     newdeckSize = deckSize
 
 
-
   println(newdeckSize)
 
   
