@@ -8,7 +8,8 @@ import scala.io.StdIn._
   if (deckSize < 8)
     newdeckSize = deckSize * (playerCount / 4)
   else
-    newdeckSize = deckSize
+    newdeckSize = deckSize * 4
+    println("test")
 
 
   println(newdeckSize)
