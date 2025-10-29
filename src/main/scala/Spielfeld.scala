@@ -2,15 +2,23 @@ import scala.io.StdIn._
 
 case class Player(var number: Int, name: String, hand: List[String] = List.empty, var score: Int = 0, var Queen: Int = 0)
 
-def getScore(players: Seq[Player]): Map[String, Int] =
-  players.map(p => p.name -> p.score).toMap
+def getScore(players: Seq[Player]): Seq[String] =
+  players.map(p => s"${p.name}: ${p.score} Punkte")
 
-def addScore(players: Seq[Player], playerName: String, scoreToAdd: Int): Unit =
-  players.find(_.name == playerName).foreach(_.score += scoreToAdd)
+def addScore(players: Seq[Player], playerNumber: Int, scoreToAdd: Int): Unit =
+  players.find(_.number == playerNumber).foreach(_.score += scoreToAdd)
 /*
 def reduceLives(players: Seq[Player],playerIndex: Int): Unit =
   players(playerIndex).lives -= 1
 */
+def printTable(players: Seq[Player]): Unit =
+  val arr = Array("╔" + "═".repeat(20) + "╗",
+    "║" + " ".repeat(20) + "║",
+    "║" + " ".repeat(20) + "║",
+    "║" + " ".repeat(20) + "║",
+    "╚" + "═".repeat(20) + "╝")
+  
+  arr.foreach(println)
 
 @main def Spielfeld(): Unit =
   println("Wilkommen bei Lügen!!!")
@@ -53,7 +61,10 @@ def reduceLives(players: Seq[Player],playerIndex: Int): Unit =
 
   println(s"Deckgröße: $newdeckSize")
 
-  println(getScore(players))
+  addScore(players, 1, 20)
+  getScore(players).foreach(println)
+  printTable(players)
+
 
 
   
