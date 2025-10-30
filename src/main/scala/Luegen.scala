@@ -8,7 +8,7 @@ object Luegen {
       name: String,
       hand: List[String] = List.empty,
       var score: Int = 0,
-      var Queen: Int = 0
+      var queen: Int = 0
   )
 
   def getScore(players: Seq[Player]): Seq[String] =
@@ -28,7 +28,7 @@ def reduceLives(players: Seq[Player],playerIndex: Int): Unit =
       "║" + " ".repeat(20) + "║",
       "╚" + "═".repeat(20) + "╝"
     )
-
+  
     arr.foreach(println)
 
   @main def myApp(): Unit =
