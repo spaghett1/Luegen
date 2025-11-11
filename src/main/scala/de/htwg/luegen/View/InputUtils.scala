@@ -1,4 +1,8 @@
-package luegen
+package de.htwg.luegen.View
+
+import de.htwg.luegen.Model.Utils.DeckUtils.Ranks
+import de.htwg.luegen.Model.{Card, Player}
+import de.htwg.luegen.Model.Utils.DeckUtils
 
 object InputUtils {
   import DeckUtils.*

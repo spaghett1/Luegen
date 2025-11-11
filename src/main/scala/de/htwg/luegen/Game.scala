@@ -1,5 +1,9 @@
 package luegen
 
+import de.htwg.luegen.Model.Player
+import de.htwg.luegen.Model.Utils.{DeckUtils, GameUtils, PlayerUtils, TurnOrderUtils}
+import de.htwg.luegen.View.Grid
+
 import scala.annotation.tailrec
 
 object Game {
@@ -23,7 +27,6 @@ object Game {
 
   @tailrec
   def playGame(players: List[Player], validOrder: List[Int], currentIndex: Int, grid: Grid): Unit = {
-    import GameData.*
 
     val player = players(validOrder(currentIndex))
     val prevPlayer = players(validOrder((currentIndex - 1 + validOrder.size) % validOrder.size))

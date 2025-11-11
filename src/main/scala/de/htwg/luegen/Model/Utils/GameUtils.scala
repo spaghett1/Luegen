@@ -1,8 +1,13 @@
-package luegen
+package de.htwg.luegen.Model.Utils
+
+import de.htwg.Model.GameData
+import de.htwg.luegen.Model.Player
+import de.htwg.luegen.View.InputUtils
+import luegen.Outcomes
 
 object GameUtils {
 
-  import GameData.*
+  import de.htwg.Model.GameData.*
   
   
   def turn(player: Player, prevPlayer: Player): Outcomes = {

@@ -1,4 +1,6 @@
-package luegen
+package de.htwg.luegen.View
+
+import de.htwg.luegen.Model.Player
 
 class Grid(players: List[Player]) {
   private val text = Array.fill(11)("")

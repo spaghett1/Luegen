@@ -1,4 +1,6 @@
-package luegen
+package de.htwg.luegen.Model.Utils
+
+import de.htwg.luegen.Model.Card
 
 object DeckUtils {
   val Suits = List("♠", "♥", "♦", "♣")

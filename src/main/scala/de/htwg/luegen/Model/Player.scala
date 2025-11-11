@@ -1,4 +1,7 @@
-package luegen
+package de.htwg.luegen.Model
+
+import de.htwg.Model.GameData
+import de.htwg.luegen.View.InputUtils
 
 case class Player(name: String, var hand: List[Card] = Nil) {
   import Card.*

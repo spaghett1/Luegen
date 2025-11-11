@@ -1,4 +1,7 @@
-package luegen
+package de.htwg.luegen.Model.Utils
+
+import de.htwg.luegen.Model.{Card, Player}
+import de.htwg.luegen.View.InputUtils
 
 object PlayerUtils {
   
