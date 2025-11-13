@@ -1,6 +1,8 @@
 package de.htwg.luegen.Model
 
 import scala.collection.mutable.Stack
+import de.htwg.luegen
+import de.htwg.luegen.Outcomes
 
 // Dies kapselt den Zustand, der vorher in GameData war
 class GameModel(var players: List[Player]) {
