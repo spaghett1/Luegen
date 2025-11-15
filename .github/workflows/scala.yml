@@ -1,41 +1,39 @@
 name: Scala CI
 
+# Wann der Workflow gestartet werden soll
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - develop
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest # Führt den Job auf dem neuesten Ubuntu Runner aus
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java on ${{ matrix.os }}
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin' # Ein zuverlässiger JDK-Anbieter
-          java-version: '17' # Oder die von Ihrem Scala-Projekt benötigte Version
-          cache: 'sbt' # Caching für sbt-Abhängigkeiten aktivieren
+          distribution: 'temurin'
+          java-version: '17' # Passen Sie dies an Ihre Scala-Version an
+          cache: 'sbt'
 
-      - name: Run Tests with sbt
-        run: sbt clean test # Führt Tests aus
-
-      - name: Run Tests and Generate Coverage
+      - name: Run Tests and Generate Coverage Report
+        # Führt alle Tests aus und generiert den scoverage-Bericht
         run: sbt clean coverage test coverageReport
 
       - name: Upload Coverage to Coveralls
-        if: matrix.os == 'macos-latest'
+        # Der Upload wird nur ausgeführt, wenn der Push auf 'main' oder 'master' erfolgte
+        # (damit die offizielle Statistik sauber bleibt).
+        if: github.ref == 'refs/heads/main'
         run: sbt coveralls
         env:
-          # Coveralls Token (optional, aber empfohlen, wenn nicht die offizielle Action genutzt wird)
-          # Besser: Das Token in den GitHub Secrets speichern und hier referenzieren
+          # Hier muss Ihr zuvor in GitHub Secrets gespeichertes Token verwendet werden
           COVERALLS_REPO_TOKEN: ${{ OmDrSwwQZges9GkMTNlmQgQ5P2AlvjCsF }}
-          # Wenn Sie die dedizierte Coveralls GitHub Action nutzen möchten, ist der Ansatz etwas anders.
