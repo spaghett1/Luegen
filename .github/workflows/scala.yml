@@ -36,4 +36,4 @@ jobs:
         run: sbt coveralls
         env:
           # Hier muss Ihr zuvor in GitHub Secrets gespeichertes Token verwendet werden
-          COVERALLS_REPO_TOKEN: ${{ OmDrSwwQZges9GkMTNlmQgQ5P2AlvjCsF }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.OmDrSwwQZges9GkMTNlmQgQ5P2AlvjCsF }}
