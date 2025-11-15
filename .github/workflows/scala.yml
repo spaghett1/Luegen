@@ -1,0 +1,41 @@
+name: Scala CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java on ${{ matrix.os }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Ein zuverlässiger JDK-Anbieter
+          java-version: '17' # Oder die von Ihrem Scala-Projekt benötigte Version
+          cache: 'sbt' # Caching für sbt-Abhängigkeiten aktivieren
+
+      - name: Run Tests with sbt
+        run: sbt clean test # Führt Tests aus
+
+      - name: Run Tests and Generate Coverage
+        run: sbt clean coverage test coverageReport
+
+      - name: Upload Coverage to Coveralls
+        if: matrix.os == 'macos-latest'
+        run: sbt coveralls
+        env:
+          # Coveralls Token (optional, aber empfohlen, wenn nicht die offizielle Action genutzt wird)
+          # Besser: Das Token in den GitHub Secrets speichern und hier referenzieren
+          COVERALLS_REPO_TOKEN: ${{ OmDrSwwQZges9GkMTNlmQgQ5P2AlvjCsF }}
+          # Wenn Sie die dedizierte Coveralls GitHub Action nutzen möchten, ist der Ansatz etwas anders.

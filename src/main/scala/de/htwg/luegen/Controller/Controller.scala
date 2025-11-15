@@ -1,8 +1,10 @@
-package de.htwg.luegen.Control
+package de.htwg.luegen.Controller
 
 import de.htwg.luegen.Model.*
+import de.htwg.luegen.Model.Utils.*
 import de.htwg.luegen.View.GameView
 import de.htwg.luegen.View.Observer
+
 import scala.util.Random
 import scala.annotation.tailrec
 

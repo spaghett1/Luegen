@@ -1,4 +1,4 @@
-package luegen
+package de.htwg.luegen.Model
 
 enum Outcomes {
   

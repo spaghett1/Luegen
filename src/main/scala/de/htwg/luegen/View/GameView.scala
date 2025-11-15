@@ -1,7 +1,7 @@
 package de.htwg.luegen.View
 
-import de.htwg.luegen.model.* // Importiert Model-Klassen (Player, Card, etc.)
-import luegen.controller.GameController // Braucht den Controller, um Daten abzurufen
+import de.htwg.luegen.Model.* // Importiert Model-Klassen (Player, Card, etc.)
+import de.htwg.luegen.Controller.GameController // Braucht den Controller, um Daten abzurufen
 
 // Definiere Observer-Trait (kann in interfaces.scala oder hier sein)
 trait Observer {
