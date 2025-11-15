@@ -25,6 +25,9 @@ jobs:
           java-version: '17' # Passen Sie dies an Ihre Scala-Version an
           cache: 'sbt'
 
+      - name: Fix sbt PATH
+        run: echo "/usr/local/bin" >> $GITHUB_PATH
+
       - name: Run Tests and Generate Coverage Report
         # Führt alle Tests aus und generiert den scoverage-Bericht
         run: sbt clean coverage test coverageReport
