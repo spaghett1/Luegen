@@ -22,21 +22,23 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17' # Passen Sie dies an Ihre Scala-Version an
+          java-version: '17' # Pass the Scala version here
           cache: 'sbt'
 
+      # DIESER SCHRITT IST OFT NICHT NÖTIG, WENN DER ABSOLUTE PFAD VERWENDET WIRD.
+      # WIR LASSEN IHN ZUR SICHERHEIT DRIN, ABER DER ABSOLUTE PFAD IST WICHTIGER.
       - name: Fix sbt PATH
         run: echo "/usr/local/bin" >> $GITHUB_PATH
 
       - name: Run Tests and Generate Coverage Report
-        # Führt alle Tests aus und generiert den scoverage-Bericht
-        run: sbt clean coverage test coverageReport
+        # Verwendung des ABSOLUTEN PFADES, um 'sbt: command not found' zu vermeiden.
+        run: /usr/bin/sbt clean coverage test coverageReport
 
       - name: Upload Coverage to Coveralls
-        # Der Upload wird nur ausgeführt, wenn der Push auf 'main' oder 'master' erfolgte
-        # (damit die offizielle Statistik sauber bleibt).
+        # Der Upload wird nur ausgeführt, wenn der Push auf 'main' erfolgte.
         if: github.ref == 'refs/heads/main'
-        run: sbt coveralls
+        # HIER WIRD DER ABSOLUTE PFAD AUCH FÜR COVERALLS VERWENDET.
+        run: /usr/bin/sbt coveralls
         env:
           # Hier muss Ihr zuvor in GitHub Secrets gespeichertes Token verwendet werden
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
