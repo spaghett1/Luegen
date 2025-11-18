@@ -1,12 +1,12 @@
-package luegen
+package de.htwg.luegen.View
 
-class Grid(players: List[Player]) {
-  private val text = Array.fill(11)("")
-  private var numberPos = 0
+import de.htwg.luegen.Model.Player
+
+class Grid() {
+  val text = Array.fill(11)("")
+  var numberPos = 0
   
-  initGrid(players)
-  
-  private def initGrid(players: List[Player]): Unit = {
+  def initGrid(players: List[Player]): Unit = {
 
     val names = players
       .map(p => if p.name.length % 2 == 0 then p.name else s" ${p.name}")

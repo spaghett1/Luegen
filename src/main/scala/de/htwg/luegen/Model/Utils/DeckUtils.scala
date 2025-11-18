@@ -1,4 +1,7 @@
-package luegen
+package de.htwg.luegen.Model.Utils
+
+import de.htwg.luegen.Model.Card
+import de.htwg.luegen.Model.Player
 
 object DeckUtils {
   val Suits = List("♠", "♥", "♦", "♣")
@@ -11,5 +14,4 @@ object DeckUtils {
   def shuffle(deck: List[Card]): List[Card] = {
     scala.util.Random.shuffle(deck)
   }
-
 }

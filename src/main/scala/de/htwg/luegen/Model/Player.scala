@@ -1,6 +1,8 @@
-package luegen
+package de.htwg.luegen.Model
 
-case class Player(name: String, var hand: List[Card] = Nil) {
+import de.htwg.luegen.View.InputUtils
+
+case class Player(name: String = "", var hand: List[Card] = Nil) {
   import Card.*
   
   def addCards(cards: List[Card]): Unit = {
@@ -19,14 +21,6 @@ case class Player(name: String, var hand: List[Card] = Nil) {
     } else {
       0
     }
-  }
-  
-  def playSelectedCards(cards: List[Card]): Unit = {
-    if (cards.isEmpty) return
-    removeCards(cards)
-    GameData.discardedCards.pushAll(cards)
-    GameData.amountPlayed = cards.length
-    InputUtils.playerLaysCards(this, cards)
   }
   
   def hasCards: Boolean = hand.nonEmpty
