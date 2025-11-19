@@ -25,9 +25,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Clean sbt build structure cache
-        run: rm -rf project/target project/project/target
-
       - name: Install sbt
         uses: coursier/setup-action@v1
         with:
@@ -42,7 +39,7 @@ jobs:
             ${{ runner.os }}-sbt-
 
       - name: Run tests and coverage
-        run: sbt clean coverage coveralls
+        run: sbt clean coverage test coverageReport
         env:
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
 
