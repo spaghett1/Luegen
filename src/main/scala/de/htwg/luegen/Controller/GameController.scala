@@ -3,17 +3,25 @@ package de.htwg.luegen.Controller
 import de.htwg.luegen.View.*
 import de.htwg.luegen.Model.*
 import de.htwg.luegen.Outcomes
-import de.htwg.luegen.Outcomes.Played
+import de.htwg.luegen.Outcomes.{ChallengedLieLost, ChallengedLieWon, Invalid, Played}
 
 import scala.collection.mutable.ListBuffer
 import scala.compiletime.uninitialized
 import scala.annotation.tailrec
 
+case class ActionDetails(
+  isGameStart: Boolean = false,
+  playedPlayer: Option[Player] = None,
+  playedCards: List[Card] = Nil
+)
+
 class GameController(val model: GameModel) extends Observable {
   private var view: GameView = uninitialized
   private val observers: ListBuffer[Observer] = ListBuffer()
-  
-  
+
+  var lastActionOutcome = Outcomes.Invalid
+  var lastActionDetails: Option[ActionDetails] = None
+
   override def registerObserver(o: Observer): Unit = {
     observers += o
     o match {
@@ -25,69 +33,67 @@ class GameController(val model: GameModel) extends Observable {
   override def notifyObservers(): Unit = observers.foreach(_.updateDisplay())
   
   def initGame(): Unit = {
-    val numPlayers = view.getNum
-    val playersList = (1 to numPlayers).map(view.getPlayerName).toList
-
-    model.setupPlayers(playersList)
-
+    notifyObservers()
+  }
+  def setupGame(numPlayers: Int, names: List[String]): Unit = {
+    model.setupPlayers(names)
     model.dealCards()
-    
+
     view.initGrid(model.players)
 
     model.setupTurnOrder()
 
-    view.startGamePrompt(model.currentPlayer)
+    lastActionOutcome = Outcomes.Played
+
+    lastActionDetails = Some(ActionDetails(isGameStart = true))
 
     notifyObservers()
-    
-    playGameLoop()
   }
-  
-  def playGameLoop(): Unit = {
 
+  def handleRoundRank(rank: String): Unit = {
+    model.roundRank = rank
+    lastActionOutcome = Outcomes.Played
+    lastActionDetails = None
+    notifyObservers()
+  }
+
+  def handleCardPlay(cardIndices: List[Int]): Unit = {
     val player = model.currentPlayer
-    var outcome = Outcomes.Invalid
-    if (model.isFirstTurn) {
-      model.roundRank = view.callRank(model.validRanks)
-      playAction(player)
-      outcome = Played
-    }
-    val prevPlayer = model.getPrevPlayer()
-    outcome = playerTurnAction(player, prevPlayer)
-    model.setNextPlayer(outcome)
+    val selected = model.playCards(cardIndices)
 
+    lastActionOutcome = Played
+    lastActionDetails = Some(ActionDetails(
+      playedPlayer = Some(player),
+      playedCards = selected
+    ))
+
+    model.setNextPlayer(Played)
     notifyObservers()
-
-    playGameLoop()
   }
 
-  def playerTurnAction(player: Player, prevPlayer: Player): Outcomes = {
-    val callsLie = view.readYesNo(prevPlayer)
-    if (callsLie) {
-      val outcome = model.evaluateReveal()
-      outcome match {
-        case Outcomes.ChallengedLieWon => {
-          view.challengerWonMessage(player, prevPlayer)
-        }
-        case Outcomes.ChallengedLieLost => {
-          view.challengerLostMessage(player, prevPlayer)
-        }
-      }
-      outcome
+  def handleChallengeDecision(callsLie: Boolean): Unit = {
+    val outcome = if (callsLie) {
+      val result = model.evaluateReveal()
+      result
     } else {
-      playAction(player)
       Played
     }
+
+    lastActionOutcome = outcome
+    lastActionDetails = None
+
+    model.setNextPlayer(outcome)
+    notifyObservers()
   }
 
-  def playAction(player: Player): Unit = {
-    view.displayPlayerHand(player)
-    val cardIndices = view.selectCards(player)
-    val selected = model.playCards(cardIndices)
-    view.printLayedCards(player, selected)
-  }
+  def getLastActionOutcome = lastActionOutcome
+  def getLastActionDetails = lastActionDetails
 
   def getCurrentPlayers = model.players
   def getDiscardedCount = model.discardedCards.length
   def getCurrentPlayer = model.currentPlayer
+  def getPrevPlayer = model.getPrevPlayer()
+  def isValidRanks = model.validRanks
+  def isFirstTurn = model.isFirstTurn
+  def getRoundRank = model.roundRank
 }

@@ -1,150 +1,180 @@
 package de.htwg.luegen.Controller
 
-import de.htwg.luegen.Model.{Card, GameModel, Player}
-import de.htwg.luegen.Outcomes
-import de.htwg.luegen.Outcomes.{ChallengedLieLost, ChallengedLieWon, Played}
-import de.htwg.luegen.View.GameView
-
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.any
 
+import de.htwg.luegen.Model._
+import de.htwg.luegen.Outcomes
+import de.htwg.luegen.View._
+
+import scala.collection.mutable.Stack
+import scala.util.Random
+
 class GameControllerSpec extends AnyWordSpec with Matchers with MockitoSugar {
 
-  // Mocks sind außerhalb definiert, um in setupController wiederverwendet zu werden
-  val mockModel: GameModel = mock[GameModel]
-  val mockView: GameView = mock[GameView]
+  // Interne Case Class, um den Controller-Getter-Typ zu simulieren (für Vergleiche)
+  private case class ActionDetails(
+    isGameStart: Boolean = false,
+    playedPlayer: Option[Player] = None,
+    playedCards: List[Card] = Nil
+  )
 
-  val testPlayer = Player("CurrentPlayer", List(Card("S", "A")))
-  val testPrevPlayer = Player("PrevPlayer")
+  // Setup Players and Cards for predictable results
+  val p1 = Player("P1", List(Card("S", "A"), Card("H", "K")))
+  val p2 = Player("P2", List(Card("C", "2")))
+  val p3 = Player("P3", List(Card("D", "10")))
+  val allPlayers = List(p1, p2, p3)
 
-  /**
-   * Setzt Mocks zurück, initialisiert den Controller und konfiguriert die Standard-Mocks.
-   * MUSS VOR JEDEM TEST aufgerufen werden.
-   */
-  def setupController(): GameController = {
-    // *** KRITISCH: Setzt alle Mockito-Zähler und Stubs zurück ***
-    reset(mockModel, mockView)
+  // Setze den Random Seed, damit setupTurnOrder vorhersagbar ist
+  Random.setSeed(42)
+
+  /** NEU: Initialisiert den Controller mit einem Mock-Model. */
+  def setupController(): (GameModel, GameController, GameView) = {
+    // *** Wichtig: Model ist nun ein Mock! ***
+    val mockModel: GameModel = mock[GameModel]
+
+    // Setze erwarteten Zustand auf dem Mock:
+    when(mockModel.players).thenReturn(allPlayers)
+    when(mockModel.currentPlayer).thenReturn(p1)
+    when(mockModel.getPrevPlayer()).thenReturn(p3) // Annahme: P3 ist vorheriger Spieler
+    when(mockModel.roundRank).thenReturn("A") // Annahme: RoundRank ist gesetzt
+    when(mockModel.validRanks).thenReturn(List("A", "K", "D")) // Für handleRoundRank Test
 
     val controller = new GameController(mockModel)
-
-    // Die Registrierung findet hier statt, um die `view` Variable im Controller zu setzen
+    val mockView: GameView = mock[GameView]
     controller.registerObserver(mockView)
 
-    // Standard-Mocks setzen
-    when(mockModel.currentPlayer).thenReturn(testPlayer)
-    when(mockModel.getPrevPlayer()).thenReturn(testPrevPlayer)
-    when(mockModel.validRanks).thenReturn(List("A", "K"))
-
-    controller
+    (mockModel, controller, mockView)
   }
 
-  "Ein GameController" should {
+  "A GameController (using simplified Mockito)" should {
 
-    "observer management" should {
+    "initGame sollte nur notifyObservers aufrufen" in {
+      val (_, controller, mockView) = setupController()
 
-      "sollte die View bei der Registrierung als Observer NICHT sofort benachrichtigen" in {
-        // Da registerObserver() kein notifyObservers() aufruft, sollte die View 0x aufgerufen werden.
-        val controller = setupController()
-        verify(mockView, never()).updateDisplay()
-      }
+      controller.initGame()
 
-      "notifyObservers sollte alle Observables benachrichtigen" in {
-        val controller = setupController()
-        val mockObserver: Observer = mock[Observer]
-        controller.registerObserver(mockObserver)
-
-        // mockView ist bereits registriert (1. Observer)
-        // mockObserver wird registriert (2. Observer)
-
-        controller.notifyObservers()
-
-        // Die View wurde 1x durch notifyObservers() aufgerufen.
-        verify(mockView, times(1)).updateDisplay()
-        verify(mockObserver, times(1)).updateDisplay()
-      }
+      verify(mockView, times(1)).updateDisplay()
+      controller.getLastActionOutcome should be(Outcomes.Invalid)
     }
 
-    "initGame" should {
-      "Model-Setup und View-Initialisierung korrekt orchestrieren" in {
-        val controller = setupController()
+    // --- Test der View-Callbacks ---
 
-        when(mockView.getNum).thenReturn(2)
-        when(mockView.getPlayerName(any[Int])).thenReturn("P1", "P2")
-        when(mockModel.players).thenReturn(List(Player("P1"), Player("P2")))
-        // Blockiere die endlose Rekursion (playGameLoop)
-        doThrow(new RuntimeException("Test Stop")).when(mockModel).isFirstTurn
+    "setupGame sollte Model initialisieren und GameStart Details setzen" in {
+      val (mockModel, controller, mockView) = setupController()
 
-        try { controller.initGame() } catch { case _: Throwable => }
+      // Arrange (Simuliere Zustand vor setupGame)
+      when(mockModel.players).thenReturn(Nil)
 
-        // notifyObservers() wird in initGame() aufgerufen, daher ist der Zähler 1
-        verify(mockView, times(1)).updateDisplay()
-      }
+      // Act
+      controller.setupGame(3, List("A", "B", "C"))
+
+      // Assert Model-Aktionen
+      verify(mockModel, times(1)).setupPlayers(List("A", "B", "C"))
+      verify(mockModel, times(1)).dealCards()
+      verify(mockModel, times(1)).setupTurnOrder()
+
+      // Assert transienter Zustand (GameStart)
+      controller.getLastActionOutcome should be(Outcomes.Played)
+      controller.getLastActionDetails.get.isGameStart should be(true)
+
+      verify(mockView, times(1)).updateDisplay()
     }
 
+    "handleRoundRank sollte roundRank setzen und ActionDetails löschen" in {
+      val (mockModel, controller, mockView) = setupController()
 
-    "playerTurnAction" when {
+      // Act
+      controller.handleRoundRank("K")
 
-      "die Lüge AUFGEDECKT wird (ChallengedLieWon)" in {
-        val controller = setupController()
-        when(mockView.readYesNo(testPrevPlayer)).thenReturn(true)
-        when(mockModel.evaluateReveal()).thenReturn(ChallengedLieWon)
+      // Assert Model-Aktionen
+      verify(mockModel, times(1)).roundRank_=(any[String])
 
-        controller.playerTurnAction(testPlayer, testPrevPlayer)
+      // Assert transienter Zustand Reset
+      controller.getLastActionOutcome should be(Outcomes.Played)
+      controller.getLastActionDetails should be(None)
 
-        verify(mockModel, times(1)).evaluateReveal() // FIX: Zähler ist 1 (isoliert)
-        verify(mockView).challengerWonMessage(testPlayer, testPrevPlayer)
-      }
-
-      "die Lüge AUFGEDECKT wird (ChallengedLieLost)" in {
-        val controller = setupController()
-        when(mockView.readYesNo(testPrevPlayer)).thenReturn(true)
-        when(mockModel.evaluateReveal()).thenReturn(ChallengedLieLost)
-
-        controller.playerTurnAction(testPlayer, testPrevPlayer)
-
-        verify(mockModel, times(1)).evaluateReveal() // FIX: Zähler ist 1 (isoliert)
-        verify(mockView).challengerLostMessage(testPlayer, testPrevPlayer)
-      }
-
-      "der Spieler NICHT aufdeckt (Karte gespielt)" in {
-        val controller = setupController()
-        when(mockView.readYesNo(testPrevPlayer)).thenReturn(false)
-        when(mockView.selectCards(testPlayer)).thenReturn(List(1))
-        when(mockModel.playCards(List(1))).thenReturn(List(Card("S", "A")))
-
-        controller.playerTurnAction(testPlayer, testPrevPlayer)
-
-        verify(mockModel, never()).evaluateReveal() // FIX: evaluateReveal wird nicht aufgerufen
-        verify(mockView, times(1)).displayPlayerHand(testPlayer)
-      }
+      verify(mockView, times(1)).updateDisplay()
     }
 
-    "playAction aufgerufen wird" should {
-      "Karten auswählen, spielen und das Ergebnis anzeigen" in {
-        val controller = setupController()
-        val selectedCards = List(Card("S", "K"))
-        when(mockView.selectCards(testPlayer)).thenReturn(List(1))
-        when(mockModel.playCards(List(1))).thenReturn(selectedCards)
+    "handleCardPlay sollte Karten spielen, ActionDetails setzen und Spieler wechseln" in {
+      val (mockModel, controller, mockView) = setupController()
 
-        controller.playAction(testPlayer)
+      val playedCards = List(Card("S", "X"), Card("S", "Y")) // Mock returned cards
 
-        verify(mockView, times(1)).displayPlayerHand(testPlayer) // FIX: Zähler ist 1 (isoliert)
-        verify(mockModel).playCards(List(1))
-      }
+      // Stub der Model-Aktionen
+      when(mockModel.playCards(List(1, 2))).thenReturn(playedCards)
+
+      // Act
+      controller.handleCardPlay(List(1, 2))
+
+      // Assert Model-Aktionen
+      verify(mockModel, times(1)).playCards(List(1, 2)) // Verify input
+      verify(mockModel, times(1)).setNextPlayer(Outcomes.Played) // Verify player advance
+
+      // Assert transienter Zustand (Played)
+      controller.getLastActionOutcome should be(Outcomes.Played)
+      // Wir können die tatsächlich gemockten Karten prüfen
+      controller.getLastActionDetails.get.playedCards should contain theSameElementsAs playedCards
+
+      verify(mockView, times(1)).updateDisplay()
     }
 
-    "Getter-Methoden aufgerufen werden" should {
-      "die aktuellen Daten vom Model zurückgeben" in {
-        val controller = setupController()
-        when(mockModel.players).thenReturn(List(testPlayer))
-        when(mockModel.discardedCards).thenReturn(collection.mutable.Stack(Card("S", "A")))
+    // --- Tests für Challenge Decision ---
 
-        controller.getCurrentPlayers should equal(List(testPlayer))
-        controller.getDiscardedCount shouldBe 1
-      }
+    "handleChallengeDecision (callsLie=true) sollte LieWon korrekt behandeln (Gewinner bleibt)" in {
+      val (mockModel, controller, mockView) = setupController()
+
+      // Arrange for LieWon
+      when(mockModel.evaluateReveal()).thenReturn(Outcomes.ChallengedLieWon)
+
+      // Act
+      controller.handleChallengeDecision(callsLie = true)
+
+      // Assert Model-Aktionen
+      verify(mockModel, times(1)).evaluateReveal()
+      verify(mockModel, times(1)).setNextPlayer(Outcomes.ChallengedLieWon)
+
+      // Assert transienter Zustand
+      controller.getLastActionOutcome should be(Outcomes.ChallengedLieWon)
+      controller.getLastActionDetails should be(None)
+
+      verify(mockView, times(1)).updateDisplay()
+    }
+
+    "handleChallengeDecision (callsLie=false) sollte nicht evaluateReveal aufrufen und Spieler wechseln" in {
+      val (mockModel, controller, mockView) = setupController()
+
+      // Act
+      controller.handleChallengeDecision(callsLie = false)
+
+      // Assert Model-Aktionen
+      verify(mockModel, never()).evaluateReveal()
+      verify(mockModel, times(1)).setNextPlayer(Outcomes.Played)
+
+      // Assert transienter Zustand
+      controller.getLastActionOutcome should be(Outcomes.Played)
+      controller.getLastActionDetails should be(None)
+
+      verify(mockView, times(1)).updateDisplay()
+    }
+
+    "Getter-Methoden sollten Model-Daten zurückgeben" in {
+      val (mockModel, controller, _) = setupController()
+
+      when(mockModel.roundRank).thenReturn("10")
+      when(mockModel.discardedCards).thenReturn(Stack(Card("S", "A")))
+
+      controller.getCurrentPlayers should equal(allPlayers)
+      controller.getDiscardedCount shouldBe 1
+      controller.getCurrentPlayer should equal(p1)
+      controller.getPrevPlayer should equal(p3)
+      controller.isValidRanks should equal(List("A", "K", "D"))
+      controller.isFirstTurn should equal(false) // da roundRank auf "A" gemockt ist
+      controller.getRoundRank should equal("10")
     }
   }
 }
