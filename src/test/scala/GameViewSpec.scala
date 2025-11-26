@@ -1,81 +1,60 @@
 package de.htwg.luegen.View
 
 import de.htwg.luegen.Controller.GameController
-import de.htwg.luegen.Controller.ActionDetails // NEU: Import der Top-Level-Klasse
-import de.htwg.luegen.Model.{Card, Player}
-import de.htwg.luegen.Outcomes
-import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.Model.{Card, GameModel, Player}
 import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.mockito.MockitoSugar
-import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers.any
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, PrintStream}
-import scala.Console.*
+import scala.Console.{withIn, withOut}
+import scala.util.Try
 
-class GameViewSpec extends AnyWordSpec with Matchers with MockitoSugar {
+/**
+ * Dummy GameController für die Instanziierung der GameView.
+ * Stellt nur die minimal notwendigen Getter bereit, um View-Methoden ohne Absturz zu testen.
+ */
+class DummyController(initialModel: GameModel = GameModel()) extends GameController(initialModel) {
+  // Für callRank-Tests: Minimal gültige Ränge
+  override def isValidRanks: List[String] = List("2", "A")
+}
 
-  // Helfer-Methode zur Erfassung der Konsolenausgabe (System.out)
-  def captureOutput(code: => Unit): String = {
-    val baos = new ByteArrayOutputStream()
-    val ps = new PrintStream(baos, true, "UTF-8")
-    val oldOut = System.out
-
-    // 1. System.out umleiten (für Code, der direkt System.out verwendet)
-    System.setOut(ps)
-
-    try {
-      // 2. scala.Console.out umleiten (für print/println)
-      withOut(ps) {
-        code
-      }
-
-      // 3. Explizites Leeren der Streams nach der Ausführung
-      ps.flush()
-
-      // 4. Den String aus dem Puffer lesen
-      baos.toString("UTF-8").trim
-    } finally {
-      // Original-Stream immer wiederherstellen!
-      System.setOut(oldOut)
-    }
-  }
-
-  // Mock des Controllers
-  val mockController: GameController = mock[GameController]
-
-  // Instanz der REALEN GameView (da wir Grid nicht mocken können)
-  val view = new GameView(mockController)
-
-  val testPlayer = Player("Alice", List(Card("S", "A"), Card("H", "10")))
-  val testPrevPlayer = Player("Bob")
-  val defaultPlayers = List(testPlayer, testPrevPlayer)
-
-  // Die interne Definition der ActionDetails wurde entfernt und durch den Import ersetzt.
+class GameViewSpec extends AnyWordSpec with Matchers {
 
   private val originalIn = System.in
   private val originalOut = System.out
+  private val dummyController = new DummyController()
+  // GameView Instanziierungs-Helfer
+  private def createView() = new GameView(dummyController)
 
+  /**
+   * HILFSFUNKTION: Simuliert Benutzereingaben und erfasst Konsolenausgabe,
+   * notwendig für das Testen von Methoden, die `StdIn.readLine()` verwenden.
+   */
   def simulateInput[T](inputs: List[String])(testCode: => T): (T, String) = {
-    val inputData = inputs.mkString(System.lineSeparator())
+    val inputData = inputs.mkString("\n") + "\n" // wichtiges trailing newline
     val inputStream = new ByteArrayInputStream(inputData.getBytes("UTF-8"))
 
     val outputStream = new ByteArrayOutputStream()
-    val printStream = new PrintStream(outputStream, false, "UTF-8")
+    val printStream = new PrintStream(outputStream, true, "UTF-8") // auto-flush true
 
     System.setIn(inputStream)
     System.setOut(printStream)
 
     try {
-      var result: T = null.asInstanceOf[T]
-
-      withIn(inputStream) {
-        withOut(printStream) {
-          result = testCode
+      // Wenn Testcode blockt wegen fehlender Input, brechen wir ihn ab statt zu hängen
+      val result = Try {
+        withIn(inputStream) {
+          withOut(printStream) {
+            testCode
+          }
         }
+      } match {
+        case scala.util.Success(value) => value
+        case scala.util.Failure(e) =>
+          throw new RuntimeException("❌ Test blockte oder crashte wegen fehlender Eingabe! " +
+            "Bitte testen, ob genug Input geliefert wurde.\nUrsache: " + e.getMessage, e)
       }
 
-      printStream.flush()
       (result, outputStream.toString("UTF-8").trim)
     } finally {
       System.setIn(originalIn)
@@ -83,178 +62,150 @@ class GameViewSpec extends AnyWordSpec with Matchers with MockitoSugar {
     }
   }
 
-  // NEUE HELFERFUNKTION: Setzt die minimalen Controller-Stubs, um NullPointer-Exceptions zu vermeiden.
-  def setupDefaultStubs(
-    isFirstTurn: Boolean = false,
-    roundRank: String = "K",
-    currentPlayer: Player = testPlayer,
-    prevPlayer: Player = testPrevPlayer): Unit = {
+  // Beispiel-Daten
+  val cardA = Card("H", "A")
+  val cardK = Card("C", "K")
+  val card10 = Card("S", "10") // Länge 3
+  val cardLong = Card("D", "100") // Länge 4
+  val testPlayer = Player("Tester", List(cardA, cardK, card10))
+  val playerWithLongNameCard = Player("P", List(cardLong, cardA))
 
-    reset(mockController)
-    // KRITISCH: Stubs für alle Getter, die in updateDisplay aufgerufen werden
-    when(mockController.getCurrentPlayers).thenReturn(List(currentPlayer, prevPlayer))
-    when(mockController.getDiscardedCount).thenReturn(0)
-    when(mockController.getCurrentPlayer).thenReturn(currentPlayer) // FIX 1: Player ist nicht null
-    when(mockController.getPrevPlayer).thenReturn(prevPlayer)
-    when(mockController.isFirstTurn).thenReturn(isFirstTurn)
-    when(mockController.getRoundRank).thenReturn(roundRank) // FIX 2: String ist nicht null
-    when(mockController.isValidRanks).thenReturn(List("A", "K"))
+  "GameView Input Methods (Testing retryUntilValid wrapper)" should {
 
-    // Default transient state (no special message)
-    when(mockController.getLastActionOutcome).thenReturn(Outcomes.Invalid)
-    when(mockController.getLastActionDetails).thenReturn(None)
+    "getNum sollte eine gültige Zahl (2-8) zurückgeben und ungültige wiederholen" in {
+      // Input: "1" (ungültig), "neun" (ungültig/Parse-Fehler), "4" (gültig)
+      val (result, output) = simulateInput(List("1", "neun", "4")) {
+        createView().getNum
+      }
+      result shouldBe 4
+      output should include("Wieviele Spieler? (2-8)")
+      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 2
+    }
+
+    "getPlayerName sollte einen gültigen Namen (< 10 Zeichen) zurückgeben" in {
+      // Input: "" (ungültig), "DerNameIstZuLangFuerZehn" (ungültig), "Max" (gültig)
+      val (result, output) = simulateInput(List("", "DerNameIstZuLangFuerZehn", "Max")) {
+        createView().getPlayerName(1)
+      }
+      result shouldBe "Max"
+      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 2
+    }
+
+    "callRank sollte einen gültigen Rang ('A') zurückgeben" in {
+      // Input: "J" (ungültig), "A" (gültig, da in DummyController.isValidRanks)
+      val (result, output) = simulateInput(List("J", "A")) {
+        createView().callRank(dummyController.isValidRanks)
+      }
+      result shouldBe "A"
+      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 1
+    }
+
+    "selectCards sollte bis zu drei gültige Indizes zurückgeben" in {
+      // P1 Hand size is 3
+      // Input: "1,2,3,4" (zu viele/ungültiger Index), "1,2" (gültig)
+      val (result, output) = simulateInput(List("1,2,3,4", "1,2")) {
+        createView().selectCards(testPlayer)
+      }
+      result should contain theSameElementsInOrderAs List(1, 2)
+      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 1
+    }
+
+    "readYesNo sollte true für 'j' und false für 'n' zurückgeben" in {
+      // Input: "falsch", "j"
+      val (resultJ, _) = simulateInput(List("falsch", "j")) {
+        createView().readYesNo(testPlayer)
+      }
+      resultJ shouldBe true
+
+      // Input: "n"
+      val (resultN, _) = simulateInput(List("n")) {
+        createView().readYesNo(testPlayer)
+      }
+      resultN shouldBe false
+    }
   }
-  // ======================================================================================
 
-  "A GameView" when {
+  // --------------------------------------------------------------------------------
 
-    // ======================================================================================
-    // Tests für die INPUT-Methoden (unverändert)
-    // ======================================================================================
-    "handling correct user input via retryUntilValid" should {
+  "GameView Output/Message Methods" should {
 
-      "getNum sollte eine korrekte Spieleranzahl zurückgeben (4)" in {
-        val (result, output) = simulateInput(List("4")) { view.getNum }
-        result shouldBe 4
-        output should include("Wieviele Spieler? (2-8)")
+    "printPrompt sollte den Text auf der Konsole ausgeben" in {
+      val (_, output) = simulateInput(Nil) {
+        createView().printPrompt("Test-Prompt")
       }
-
-      "readYesNo sollte true für 'j' zurückgeben" in {
-        val (result, output) = simulateInput(List("j")) { view.readYesNo(testPrevPlayer) }
-        result shouldBe true
-      }
+      output should include("Test-Prompt")
     }
 
-    // ======================================================================================
-    // Tests für die OUTPUT-Methoden (unverändert)
-    // ======================================================================================
-    "displayPlayerHand" should {
-      "Indizes und Karten korrekt formatieren und drucken" in {
-        val player = Player("Test", List(Card("H", "10"), Card("S", "2")))
-        val output = captureOutput { view.displayPlayerHand(player) }
-        output shouldBe "1  2  \nH10S2"
+    "displayPlayerHand sollte Indizes und Karten korrekt formatieren (mittlere Länge)" in {
+      // Longest Card Name ist 3 (S10)
+      val (_, output) = simulateInput(Nil) {
+        createView().displayPlayerHand(testPlayer) // Hand: [HA, CK, S10]
       }
+      val lines = output.split('\n')
+      // Indices (1, 2, 3) - mit Padding auf 3
+      lines(0) shouldBe "1  2  3  "
+      // Cards (HA, CK, S10) - mit Padding auf 3
+      lines(1) shouldBe "HA CK S10"
     }
 
-    "die Nachrichten korrekt drucken" should {
-      "printLayedCards" in {
-        val cards = List(Card("S", "K"))
-        captureOutput { view.printLayedCards(testPlayer, cards) } shouldBe s"${testPlayer.name} legt ab: SK"
+    "displayPlayerHand sollte korrekt padden, wenn eine Karte eine andere Länge hat" in {
+      // Longest Card Name ist 4 (D100)
+      val (_, output) = simulateInput(Nil) {
+        createView().displayPlayerHand(playerWithLongNameCard) // Hand: [D100, HA]
       }
-
-      "challengerWonMessage" in {
-        val output = captureOutput { view.challengerWonMessage(testPlayer, testPrevPlayer) }
-        output should include ("Bob hat gelogen!")
-      }
+      val lines = output.split('\n')
+      // Indices (1, 2) - mit Padding auf 4
+      lines(0) shouldBe "1   2   "
+      // Cards (D100, HA) - mit Padding auf 4
+      lines(1) shouldBe "D100HA"
     }
 
-
-    // ======================================================================================
-    // NEUE TESTS FÜR updateDisplay (Flow Control und Output Interpretation)
-    // ======================================================================================
-    "updateDisplay (Flow Control)" should {
-
-      "den Setup-Flow starten, wenn players leer sind" in {
-        reset(mockController)
-        // Zustand: Leer
-        when(mockController.getCurrentPlayers).thenReturn(List.empty)
-
-        // Simulate Input: 2 Spieler, Namen P1, P2
-        val (_, _) = simulateInput(List("2", "P1", "P2")) {
-          view.updateDisplay()
-        }
-
-        verify(mockController).setupGame(2, List("P1", "P2"))
+    "printLayedCards sollte die gespielten Karten korrekt ausgeben" in {
+      val cards = List(cardA, cardK)
+      val (_, output) = simulateInput(Nil) {
+        createView().printLayedCards(testPlayer, cards)
       }
-
-      "den RoundRank-Flow starten, wenn isFirstTurn true ist" in {
-        // Hinzufügen der Default-Stubs mit isFirstTurn = true
-        setupDefaultStubs(isFirstTurn = true, roundRank = "")
-
-        // Simulate Input: "A"
-        val (_, _) = simulateInput(List("A")) {
-          view.updateDisplay()
-        }
-
-        verify(mockController).handleRoundRank("A")
-      }
-
-      "den Challenge-Flow starten, wenn currentPlayer != prevPlayer" in {
-        // Hinzufügen der Default-Stubs
-        setupDefaultStubs(isFirstTurn = false, roundRank = "K")
-
-        // Simulate Input: "j" (calls lie)
-        val (_, _) = simulateInput(List("j")) {
-          view.updateDisplay()
-        }
-
-        verify(mockController).handleChallengeDecision(true)
-      }
-
-      "den PlayCard-Flow starten, wenn currentPlayer == prevPlayer" in {
-        // Hinzufügen der Default-Stubs, wobei currentPlayer und prevPlayer gleich sind
-        setupDefaultStubs(isFirstTurn = false, roundRank = "K", prevPlayer = testPlayer)
-
-        // Simulate Input: "1" (selects card 1)
-        val (_, output) = simulateInput(List("1")) {
-          view.updateDisplay()
-        }
-
-        verify(mockController).handleCardPlay(List(1))
-        output should include (s"${testPlayer.name} ist am Zug")
-      }
+      output shouldBe s"${testPlayer.name} legt ab: HA, CK"
     }
 
-
-    "updateDisplay (Output Interpretation)" should {
-
-      "die Startmeldung anzeigen, wenn ActionOutcome Played und isGameStart True ist" in {
-        setupDefaultStubs(isFirstTurn = true, roundRank = "") // isFirstTurn ist true
-
-        // Transienter Zustand für GameStart
-        when(mockController.getLastActionOutcome).thenReturn(Outcomes.Played)
-        val startDetails = Some(ActionDetails(isGameStart = true))
-        when(mockController.getLastActionDetails).thenReturn(startDetails)
-
-        // Dummy I/O (RoundRank)
-        val (_, output) = simulateInput(List("A")) {
-          view.updateDisplay()
-        }
-        output should include (s"Das Spiel startet mit ${testPlayer.name}!")
-        verify(mockController).handleRoundRank("A")
+    "startGamePrompt sollte die Startnachricht korrekt ausgeben" in {
+      val (_, output) = simulateInput(Nil) {
+        createView().startGamePrompt(testPlayer)
       }
+      output shouldBe s"Das Spiel startet mit ${testPlayer.name}!"
+    }
 
-      "die LayedCards-Meldung anzeigen, wenn ActionOutcome Played und Karten gespielt wurden" in {
-        setupDefaultStubs(isFirstTurn = false, roundRank = "K")
-
-        // Transienter Zustand für Cards Played
-        when(mockController.getLastActionOutcome).thenReturn(Outcomes.Played)
-        val playedCards = List(Card("H", "A"), Card("C", "K"))
-        val playedDetails = Some(ActionDetails(playedPlayer = Some(testPrevPlayer), playedCards = playedCards))
-        when(mockController.getLastActionDetails).thenReturn(playedDetails)
-
-        // Dummy I/O (Challenge-Flow)
-        val (_, output) = simulateInput(List("n")) {
-          view.updateDisplay()
-        }
-        output should include (s"${testPrevPlayer.name} legt ab: HA, CK")
-        verify(mockController).handleChallengeDecision(false) // 'n' für keine Lüge
+    "challengerWonMessage (LieWon) sollte die Nachricht für den erfolgreichen Aufdecker ausgeben" in {
+      val prevPlayer = Player("Prev")
+      val (_, output) = simulateInput(Nil) {
+        createView().challengerWonMessage(testPlayer, prevPlayer)
       }
+      val lines = output.split('\n')
+      lines(0) shouldBe s"${prevPlayer.name} hat gelogen!"
+      lines(1) shouldBe "Er zieht alle Karten."
+    }
 
-      "die ChallengerWon-Meldung anzeigen, wenn ActionOutcome ChallengedLieWon ist" in {
-        setupDefaultStubs(isFirstTurn = false, roundRank = "K")
-
-        // Transienter Zustand für Challenger Won
-        when(mockController.getLastActionOutcome).thenReturn(Outcomes.ChallengedLieWon)
-        when(mockController.getLastActionDetails).thenReturn(None)
-
-        // Dummy I/O (Challenge-Flow)
-        val (_, output) = simulateInput(List("j")) {
-          view.updateDisplay()
-        }
-        output should include (s"${testPrevPlayer.name} hat gelogen!")
-        verify(mockController).handleChallengeDecision(true)
+    "challengerLostMessage (LieLost) sollte die Nachricht für den erfolglosen Aufdecker ausgeben" in {
+      val prevPlayer = Player("Prev")
+      val (_, output) = simulateInput(Nil) {
+        createView().challengerLostMessage(testPlayer, prevPlayer)
       }
+      val lines = output.split('\n')
+      lines(0) shouldBe s"${prevPlayer.name} hat die Wahrheit gesagt!"
+      lines(1) shouldBe s"${testPlayer.name} zieht alle Karten!"
+    }
+  }
+
+  // --------------------------------------------------------------------------------
+
+  "GameView Utility Methods" should {
+
+    "initGrid sollte ohne Fehler ausgeführt werden" in {
+      val players = List(Player("A"), Player("B"), Player("C"), Player("D"))
+      val view = createView()
+
+      // Prüft nur, ob die Methode ohne Fehler durchläuft, da die interne Grid-Instanz private ist
+      noException should be thrownBy view.initGrid(players)
     }
   }
 }

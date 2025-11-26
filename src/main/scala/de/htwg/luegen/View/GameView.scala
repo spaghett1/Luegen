@@ -4,7 +4,7 @@ import de.htwg.luegen.Controller.Observer
 import de.htwg.luegen.Controller.GameController
 import de.htwg.luegen.View.InputUtils.*
 import de.htwg.luegen.Model.*
-import de.htwg.luegen.Outcomes
+import de.htwg.luegen.TurnState.*
 import scala.util.Try
 
 class GameView(controller: GameController) extends Observer {
@@ -14,12 +14,11 @@ class GameView(controller: GameController) extends Observer {
   
   override def updateDisplay(): Unit = {
     val players = controller.getCurrentPlayers
+    val playedCards = controller.getPlayedCards
     val discardedCount = controller.getDiscardedCount
     val currentPlayer = controller.getCurrentPlayer
     val roundRank = controller.getRoundRank
-
-    val outcome = controller.getLastActionOutcome
-    val details = controller.getLastActionDetails
+    val state = controller.getTurnState
 
     if (players.isEmpty) {
       val numPlayers = getNum
@@ -41,40 +40,29 @@ class GameView(controller: GameController) extends Observer {
     }
 
     val prevPlayer = controller.getPrevPlayer
-
-    (outcome, details) match {
-      case (Outcomes.Played, Some(d)) if d.isGameStart =>
-        startGamePrompt(currentPlayer)
-
-      case (Outcomes.Played, Some(d)) if d.playedPlayer.isDefined && d.playedPlayer.nonEmpty =>
-        d.playedPlayer.foreach(p => printLayedCards(p, d.playedCards))
-
-      case (Outcomes.ChallengedLieWon, _) =>
-        challengerWonMessage(currentPlayer, prevPlayer)
-
-      case (Outcomes.ChallengedLieLost, _) =>
-        challengerLostMessage(currentPlayer, prevPlayer)
-
-      case _ =>
-    }
-
+    
     if (controller.isFirstTurn) {
       val rank = callRank(controller.isValidRanks)
       controller.handleRoundRank(rank)
       return
     }
-
-    if (currentPlayer != prevPlayer) {
-      val callsLie = readYesNo(prevPlayer)
-
-      controller.handleChallengeDecision(callsLie)
-      return
-    } else {
-      printPrompt(s" ${currentPlayer.name} ist am Zug")
-      val cardIndices = selectCards(currentPlayer)
-
-      controller.handleCardPlay(cardIndices)
-      return
+    
+    state match {
+      case NoChallenge =>
+        val input = selectCards(currentPlayer)
+        controller.handleCardPlay(input)
+        return
+      case NoTurn =>
+        val callsLie = readYesNo(currentPlayer)
+        controller.handleChallengeDecision(callsLie)
+        return
+      case ChallengedLieWon =>
+        challengerWonMessage(currentPlayer, prevPlayer)
+        return
+      case ChallengedLieLost =>
+        challengerLostMessage(currentPlayer, prevPlayer)
+      case Played =>
+        printLayedCards(currentPlayer, playedCards)
     }
   }
   

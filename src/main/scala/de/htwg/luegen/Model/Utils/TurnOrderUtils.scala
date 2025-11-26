@@ -1,7 +1,6 @@
 package de.htwg.luegen.Model.Utils
 
 import de.htwg.luegen.Model.Player
-import de.htwg.luegen.Outcomes
 
 object TurnOrderUtils {
   private val baseOrder = List(1,5,4,8,2,6,3,7)

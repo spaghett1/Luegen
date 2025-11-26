@@ -1,165 +1,189 @@
 package de.htwg.luegen.Model
 
-import de.htwg.luegen.Model.Utils.TurnOrderUtils
-import de.htwg.luegen.Outcomes
-import de.htwg.luegen.Outcomes.{ChallengedLieLost, ChallengedLieWon, Played}
-
+import de.htwg.luegen.TurnState
+import de.htwg.luegen.TurnState.*
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import scala.util.Random
 
 class GameModelSpec extends AnyWordSpec with Matchers {
 
   // Setup Spieler und Karten
-  val player1 = Player("P1")
-  val player2 = Player("P2")
-  val player3 = Player("P3")
   val cardA = Card("H", "A")
   val cardK = Card("H", "K")
   val card2 = Card("S", "2")
   val card3 = Card("C", "3")
 
-  def setupModel(): GameModel = {
-    val model = new GameModel()
-    model.players = List(player1, player2, player3)
+  // Funktionale Setup-Helfer
+  def setupInitialModel(): GameModel = {
+    // Manuelle Player-Instanzen für feste Reihenfolge und Hände
+    val p1Hand = Player("P1").addCards(List(cardA, cardK))
+    val p2Hand = Player("P2").addCards(List(card2))
+    val p3Hand = Player("P3").addCards(List(card3))
+    val allPlayers = List(p1Hand, p2Hand, p3Hand)
 
-    // Setze eine vorhersagbare Reihenfolge für P1, P3, P2 (Indizes: 0, 2, 1)
-    model.playOrder = List(0,1,2)
-    model.currentPlayer = player1
-
-    // Reset Spielerhände
-    player1.hand = List(cardA, cardK)
-    player2.hand = List(card2)
-    player3.hand = List(card3)
-    model
+    // Stellt sicher, dass das Model mit den korrekten Indizes startet:
+    // P1 (Index 0) ist am Zug, P3 (Index 2) war zuletzt dran.
+    GameModel().copy(
+      players = allPlayers,
+      playOrder = List(0, 1, 2), // P1, P2, P3
+      currentPlayerIndex = 0, // P1
+      lastPlayerIndex = 2 // P3 (für getPrevPlayer)
+    )
   }
 
-  "A GameModel" when {
+  // Hilfsfunktion zum Abrufen des aktuellen Spielers
+  def getCurrentPlayer(model: GameModel): Player = model.players(model.currentPlayerIndex)
+
+  "A GameModel (Functional)" when {
     "initialized" should {
-      "Spieler korrekt initialisieren" in {
-        val model = new GameModel()
-        model.setupPlayers(List("Alice", "Bob"))
-        model.players.map(_.name) should contain theSameElementsAs List("Alice", "Bob")
+      "dealCards sollte ein NEUES Model mit 52 Karten zurückgeben" in {
+        val model = GameModel().setupPlayers(List("A", "B", "C", "D"))
+        val newModel = model.dealCards()
+        newModel.players.map(_.hand.size).sum shouldBe 52
+        newModel should not be model // Prüft Immutability
       }
 
-      "52 Karten an die Spieler verteilen" in {
-        val model = new GameModel()
-        model.setupPlayers(List("A", "B", "C", "D"))
-        model.dealCards()
-        model.players.map(_.hand.size).sum shouldBe 52
+      "setupTurnOrder sollte currentPlayerIndex und playOrder korrekt setzen" in {
+        Random.setSeed(42) // Für vorhersagbaren Start
+        val model = GameModel().setupPlayers(List("A", "B", "C"))
+        val newModel = model.setupTurnOrder()
+
+        newModel.currentPlayerIndex should be >= 0
+        newModel.playOrder should not be empty
+        newModel should not be model
       }
 
-      "setupTurnOrder sollte die currentPlayer setzen" in {
-        val model = setupModel()
-        val expectedOrder = model.playOrder
-        // Da die Reihenfolge bereits im Setup gesetzt ist, wird hier nur die Methode getestet
-        model.setupPlayers(List("A", "B", "C"))
-        model.dealCards()
-        model.setupTurnOrder()
-        model.currentPlayer should not be Player()
-        model.playOrder should not be empty
-        model.playOrder should not be empty
-      }
-
-      "isFirstTurn korrekt melden" in {
-        val model = new GameModel()
-        model.isFirstTurn shouldBe true
-        model.roundRank = "A"
-        model.isFirstTurn shouldBe false
+      "setupRank sollte den roundRank setzen und ein NEUES Model zurückgeben" in {
+        val model = setupInitialModel()
+        val newModel = model.setupRank("A")
+        newModel.roundRank shouldBe "A"
+        newModel.turnState shouldBe NoChallenge
+        newModel should not be model
       }
     }
 
-    "a player plays cards" should {
-      val model = setupModel()
-      "Karten aus der Hand entfernen und zum Ablagestapel hinzufügen" in {
-        // P1 spielt Karte A (Index 1)
-        val playedCards = model.playCards(List(1))
+    "a player plays cards (playCards)" should {
+      val initialModel = setupInitialModel()
 
-        playedCards should contain theSameElementsAs List(cardA)
-        player1.hand should contain theSameElementsAs List(cardK)
-        model.discardedCards.head shouldBe cardA
-        model.amountPlayed shouldBe 1
+      "Karten aus der Hand entfernen und den Ablagestapel im NEUEN Model hinzufügen" in {
+        // P1 (Index 0) spielt Karte A (Index 1 in P1's Hand)
+        val newModel = initialModel.playCards(List(1))
+
+        // Prüfen des neuen Models
+        newModel.lastPlayedCards should contain theSameElementsAs List(cardA)
+        newModel.discardedCards.head shouldBe cardA
+        newModel.amountPlayed shouldBe 1
+        newModel.turnState shouldBe Played
+
+        // Prüfen, dass der Spieler im neuen Model aktualisiert wurde
+        newModel.players(0).hand should contain theSameElementsAs List(cardK)
+
+        // Prüfen, dass das alte Model unverändert ist (Immutability)
+        initialModel.players(0).hand should contain theSameElementsAs List(cardA, cardK)
+        initialModel.discardedCards shouldBe empty
       }
     }
 
-    "turn order is processed" should {
-      val model = setupModel()
+    "turn order is processed (setNextPlayer)" should {
+      val model = setupInitialModel() // P1 ist currentPlayerIndex=0
 
-      "getPrevPlayer sollte den korrekten vorherigen Spieler zurückgeben" in {
-        // P1 (aktuell) -> P3 (vorherig in der Reihenfolge [0, 2, 1])
-        model.getPrevPlayer() shouldBe player3
-
-        // Setze aktuellen Spieler auf P3
-        model.currentPlayer = player3
-
-        // P3 (aktuell) -> P2 (vorherig)
-        model.getPrevPlayer() shouldBe player2
+      "setNextPlayer(Played) sollte zum nächsten Spieler (P2) wechseln" in {
+        val modelPlayed = model.copy(turnState = Played)
+        val newModel = modelPlayed.setNextPlayer()
+        getCurrentPlayer(newModel).name shouldBe "P2"
+        newModel.lastPlayerIndex shouldBe 0 // P1 war der letzte
       }
 
-      "setNextPlayer sollte den nächsten Spieler korrekt setzen (Played)" in {
-        model.currentPlayer = player1 // Start P1
-        model.setNextPlayer(Played)
-        model.currentPlayer shouldBe player2
+      "setNextPlayer(ChallengedLieLost) sollte zum nächsten Spieler (P2) wechseln und Rank leeren" in {
+        val modelWithRank = model.setupRank("K") // Setze Rang
+        val modelChallengedLost = modelWithRank.copy(turnState = ChallengedLieLost)
+        val newModel = modelChallengedLost.setNextPlayer()
+        getCurrentPlayer(newModel).name shouldBe "P2"
+        newModel.roundRank shouldBe "" // Rang wird zurückgesetzt
       }
 
-      "setNextPlayer sollte den nächsten Spieler korrekt setzen (ChallengedLieLost)" in {
-        model.currentPlayer = player3 // Start P3
-        model.setNextPlayer(ChallengedLieLost)
-        model.currentPlayer shouldBe player1
-      }
-
-      "setNextPlayer sollte den aktuellen Spieler behalten (ChallengedLieWon)" in {
-        model.currentPlayer = player2 // Start P2
-        model.setNextPlayer(ChallengedLieWon)
-        model.currentPlayer shouldBe player2
-      }
-
-      "setNextPlayer sollte den nächsten Spieler setzen (Invalid)" in {
-        model.currentPlayer = player3 // Start P2
-        model.setNextPlayer(Outcomes.Invalid)
-        model.currentPlayer shouldBe player1 // Wrap
+      "setNextPlayer(ChallengedLieWon) sollte den Spieler (P1) beibehalten und Rank leeren" in {
+        val modelWithRank = model.setupRank("K")
+        val modelChallengedWon = modelWithRank.copy(turnState = ChallengedLieWon)
+        val newModel = modelChallengedWon.setNextPlayer()
+        getCurrentPlayer(newModel).name shouldBe "P1"
+        newModel.roundRank shouldBe "" // Rang wird zurückgesetzt
       }
     }
 
-    "a lie is challenged" should {
-      "evaluateReveal sollte ChallengedLieWon zurückgeben, wenn gelogen wurde" in {
-        val model = setupModel()
-        model.roundRank = "K" // Angesagter Rang ist König
-        model.amountPlayed = 1
-        model.discardedCards.push(card2) // P3 (prevPlayer) hat eine 2 gespielt und gelogen
+    "a lie is challenged (evaluateReveal)" should {
 
-        model.currentPlayer = player2
+      "evaluateReveal sollte LieWon und korrekten Zustand zurückgeben, wenn gelogen wurde" in {
+        // Setup: P1 spielt (Angeklagter), P2 deckt auf (Challenger)
+        val modelAfterP1Play = setupInitialModel()
+          .playCards(List(1)) // P1 spielt A. Hand: K. Discard: [A].
+          .copy(roundRank = "2") // P1 lügt (sagt 2 an, spielt A)
 
-        val outcome = model.evaluateReveal()
+        // Simuliere Wechsel zu P2 (Challenger)
+        val modelP2Turn = modelAfterP1Play.copy(
+          currentPlayerIndex = 1, // P2 am Zug
+          lastPlayerIndex = 0, // P1 war vorher
+          turnState = NoTurn
+        )
 
-        outcome shouldBe ChallengedLieWon
-        player1.hand.size shouldBe 3 // P3 zieht die Karten [Card3, Card2]
-        model.discardedCards shouldBe empty
+        val p1HandSizeBefore = modelP2Turn.players(0).hand.size // 1
+
+        // P2 (Challenger) ruft evaluateReveal auf
+        val newModel = modelP2Turn.evaluateReveal()
+
+        // 1. Outcome
+        newModel.turnState shouldBe ChallengedLieWon
+
+        // 2. Karten: P1 (Angeklagter/Lügner) zieht Karten.
+        // P1 hatte K, zieht A -> Handgröße: 2
+        newModel.players(0).hand.size shouldBe p1HandSizeBefore + 1
+        newModel.discardedCards shouldBe empty
+
+        // 3. Transienter Zustand
+        newModel.lastAccusedIndex shouldBe 0 // P1 wurde angeklagt
       }
 
-      "evaluateReveal sollte ChallengedLieLost zurückgeben, wenn die Wahrheit gesagt wurde" in {
-        val model = setupModel()
-        model.roundRank = "A" // Angesagter Rang ist Ass
-        model.amountPlayed = 1
-        model.discardedCards.push(cardA) // P3 (prevPlayer) hat ein Ass gespielt und die Wahrheit gesagt
+      "evaluateReveal sollte LieLost und korrekten Zustand zurückgeben, wenn die Wahrheit gesagt wurde" in {
+        // Setup: P1 spielt (Angeklagter), P2 deckt auf (Challenger)
+        val modelAfterP1Play = setupInitialModel()
+          .playCards(List(1)) // P1 spielt A. Hand: K. Discard: [A].
+          .copy(roundRank = "A") // P1 sagt Wahrheit (sagt A an, spielt A)
 
-        model.currentPlayer = player1
+        // Simuliere Wechsel zu P2 (Challenger)
+        val modelP2Turn = modelAfterP1Play.copy(
+          currentPlayerIndex = 1, // P2 am Zug
+          lastPlayerIndex = 0, // P1 war vorher
+          turnState = NoTurn
+        )
 
-        val outcome = model.evaluateReveal()
+        val p2HandSizeBefore = modelP2Turn.players(1).hand.size // 1
 
-        outcome shouldBe ChallengedLieLost
-        player1.hand.size shouldBe 3 // P1 (der Aufdecker) zieht die Karten [CardA, CardK, CardA]
-        model.discardedCards shouldBe empty
+        // P2 (Challenger) ruft evaluateReveal auf
+        val newModel = modelP2Turn.evaluateReveal()
+
+        // 1. Outcome
+        newModel.turnState shouldBe ChallengedLieLost
+
+        // 2. Karten: P2 (Challenger/Verlierer) zieht Karten.
+        // P2 hatte S2, zieht A -> Handgröße: 2
+        newModel.players(1).hand.size shouldBe p2HandSizeBefore + 1
+        newModel.discardedCards shouldBe empty
+
+        // 3. Transienter Zustand
+        newModel.lastAccusedIndex shouldBe 0 // P1 wurde angeklagt
       }
 
-      "drawAll sollte alle Karten vom Stapel zur Spielerhand hinzufügen" in {
-        val model = setupModel()
-        model.discardedCards.push(cardA, cardK)
-        val initialP1HandSize = player1.hand.size
+      "drawAll sollte alle Karten funktional zur Spielerhand hinzufügen" in {
+        val model = setupInitialModel().copy(discardedCards = List(cardA, cardK))
+        val initialP1HandSize = model.players(0).hand.size // 2
 
-        model.drawAll(player1)
+        val p1 = model.players(0)
+        val newModel = model.drawAll(p1) // P1 zieht
 
-        player1.hand.size shouldBe initialP1HandSize + 2
-        model.discardedCards shouldBe empty
+        newModel.players(0).hand.size shouldBe initialP1HandSize + 2
+        newModel.discardedCards shouldBe empty
+        newModel should not be model
       }
     }
   }

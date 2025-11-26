@@ -15,6 +15,8 @@ lazy val root = (project in file("."))
       "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
     ),
 
+    Test / parallelExecution := false,
+
     // Scoverage Settings
     coverageEnabled := true,
     coverageHighlighting := true

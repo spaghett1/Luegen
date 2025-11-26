@@ -1,8 +1,6 @@
 package de.htwg.luegen.Model.Utils
 
 import de.htwg.luegen.Model.Player
-import de.htwg.luegen.Outcomes
-import de.htwg.luegen.Outcomes.{ChallengedLieLost, ChallengedLieWon, Played, Invalid}
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
