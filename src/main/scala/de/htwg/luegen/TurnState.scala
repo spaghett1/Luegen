@@ -8,4 +8,7 @@ enum TurnState {
   case ChallengedLieWon
   case ChallengedLieLost
   case Invalid
+  case NeedsRankInput
+  case NeedsCardInput
+  case NeedsChallengeDecision
 }

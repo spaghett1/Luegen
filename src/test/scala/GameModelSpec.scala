@@ -58,7 +58,7 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         val model = setupInitialModel()
         val newModel = model.setupRank("A")
         newModel.roundRank shouldBe "A"
-        newModel.turnState shouldBe NoChallenge
+        newModel.turnState shouldBe NeedsCardInput
         newModel should not be model
       }
     }
@@ -113,6 +113,12 @@ class GameModelSpec extends AnyWordSpec with Matchers {
     }
 
     "a lie is challenged (evaluateReveal)" should {
+
+      "playerTurn should set turnState to NoChallenge if callsLie = false" in {
+        val model = setupInitialModel()
+        val modelAfterTurn = model.playerTurn(false)
+        modelAfterTurn.turnState shouldBe NoChallenge
+      }
 
       "evaluateReveal sollte LieWon und korrekten Zustand zurückgeben, wenn gelogen wurde" in {
         // Setup: P1 spielt (Angeklagter), P2 deckt auf (Challenger)
@@ -184,6 +190,18 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         newModel.players(0).hand.size shouldBe initialP1HandSize + 2
         newModel.discardedCards shouldBe empty
         newModel should not be model
+      }
+
+      "addLog should add new entry to logHistory" in {
+        val model = setupInitialModel()
+        model.logHistory shouldBe empty
+
+        val newModel = model.addLog("test entry 1")
+        newModel.logHistory should contain theSameElementsInOrderAs List("test entry 1")
+
+        val finalModel = newModel.addLog("test entry 2")
+        finalModel.logHistory.size shouldBe 2
+        finalModel.logHistory.last shouldBe "test entry 2"
       }
     }
   }

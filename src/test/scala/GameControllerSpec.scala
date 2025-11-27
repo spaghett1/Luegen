@@ -51,7 +51,9 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
   "A GameController (Functional Return Values)" should {
 
     "initGame and give back the model" in {
-      val controller = new GameController(GameModel())
+      val model = GameModel()
+      val controller = new GameController(model)
+      controller.initGame() shouldBe model
     }
     "setupGame sollte das korrekte End-Model zurückgeben und den Zustand setzen" in {
       val controller = new GameController(GameModel())
@@ -60,10 +62,18 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
       finalModel.players.size shouldBe 3
       finalModel.players.map(_.hand.size).sum shouldBe 52
       finalModel.currentPlayerIndex should be >= 0 // Prüft, ob ein Index gesetzt wurde
-      finalModel.turnState shouldBe NoTurn
+      finalModel.turnState shouldBe NeedsRankInput
 
       // Prüfe, ob das Controller-Model tatsächlich aktualisiert wurde
       controller.getCurrentPlayers.size shouldBe 3
+    }
+
+    "Executing a command should use the LoggingCommandDecorator and update logHistory" in {
+      val controller = setupInitialController(rank = "A")
+      val modelAfterPlay = controller.handleCardPlay(List(1))
+
+      modelAfterPlay.logHistory.last should include ("HandleCardPlayCommand")
+      modelAfterPlay.logHistory.size shouldBe 1
     }
 
     "handleRoundRank sollte den Rang setzen und den TurnState auf NoChallenge setzen" in {
@@ -75,7 +85,7 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
       val finalModel = controller.handleRoundRank("K")
 
       finalModel.roundRank shouldBe "K"
-      finalModel.turnState shouldBe NoTurn
+      finalModel.turnState shouldBe NeedsCardInput
     }
 
     "handleCardPlay sollte Karten spielen, zum nächsten Spieler wechseln (P2) und Model zurückgeben" in {
@@ -91,7 +101,7 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
       // 2. Spielerwechsel: P2 sollte nun am Zug sein (Index 1)
       modelAfterPlay.currentPlayerIndex shouldBe 1
       controller.getCurrentPlayer.name shouldBe "P2"
-      modelAfterPlay.turnState shouldBe NoTurn
+      modelAfterPlay.turnState shouldBe NeedsChallengeDecision
 
       // 3. P1 Hand sollte reduziert sein
       modelAfterPlay.players.find(_.name == "P1").get.hand.size shouldBe 1
@@ -118,7 +128,7 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
       val modelAfterChallenge = controller.handleChallengeDecision(callsLie = true)
 
       // 1. Outcome: Lie Won
-      modelAfterChallenge.turnState shouldBe NoTurn
+      modelAfterChallenge.turnState shouldBe ChallengedLieWon
 
       // 2. Karten: P1 (Angeklagter) zieht Karten.
       controller.getDiscardedCount shouldBe 0

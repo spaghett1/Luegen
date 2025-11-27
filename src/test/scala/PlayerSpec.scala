@@ -46,6 +46,11 @@ class PlayerSpec extends AnyWordSpec with Matchers {
         playerWithCards.longestCardName shouldBe 3
       }
 
+      "longestCardName should return 0 when no data" in {
+        val player = Player("Test", Nil)
+        player.longestCardName shouldBe 0
+      }
+
       "hasCards und cardCount korrekt widerspiegeln" in {
         val player = Player("Test", List(card1))
         player.hasCards shouldBe true

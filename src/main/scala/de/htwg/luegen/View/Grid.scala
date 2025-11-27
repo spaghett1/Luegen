@@ -63,8 +63,6 @@ class Grid() {
   }
 
   def clearScreen(): Unit = {
-    print("\u001b[2J")
-    print("\u001b[H")
-    println("\n" * 20)
+    print("\n" * 20)
   }
 }

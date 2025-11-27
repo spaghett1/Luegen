@@ -2,7 +2,11 @@ package de.htwg.luegen.Model
 
 import de.htwg.luegen.View.InputUtils
 
-case class Player(name: String = "", hand: List[Card] = Nil) {
+sealed trait PlayerType
+case object Human extends PlayerType
+case object AI extends PlayerType
+
+case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human) {
   import Card.*
   
   def addCards(cards: List[Card]): Player = {

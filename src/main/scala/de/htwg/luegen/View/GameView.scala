@@ -19,6 +19,7 @@ class GameView(controller: GameController) extends Observer {
     val currentPlayer = controller.getCurrentPlayer
     val roundRank = controller.getRoundRank
     val state = controller.getTurnState
+    val playerType = controller.getCurrentPlayerType
 
     if (players.isEmpty) {
       val numPlayers = getNum
@@ -40,20 +41,28 @@ class GameView(controller: GameController) extends Observer {
     }
 
     val prevPlayer = controller.getPrevPlayer
-    
-    if (controller.isFirstTurn) {
-      val rank = callRank(controller.isValidRanks)
-      controller.handleRoundRank(rank)
-      return
-    }
-    
+
     state match {
-      case NoChallenge =>
-        val input = selectCards(currentPlayer)
+      case NeedsRankInput =>
+        val rank = playerType match {
+          case Human => callRank(controller.isValidRanks)
+          case AI => controller.isValidRanks.head
+        }
+        controller.handleRoundRank(rank)
+        return
+
+      case NeedsCardInput =>
+        val input = playerType match {
+          case Human => selectCards(currentPlayer)
+          case AI => List(1)
+        }
         controller.handleCardPlay(input)
         return
-      case NoTurn =>
-        val callsLie = readYesNo(currentPlayer)
+      case NeedsChallengeDecision =>
+        val callsLie = playerType match {
+          case Human => readYesNo(currentPlayer)
+          case AI => false
+        }
         controller.handleChallengeDecision(callsLie)
         return
       case ChallengedLieWon =>
@@ -61,8 +70,10 @@ class GameView(controller: GameController) extends Observer {
         return
       case ChallengedLieLost =>
         challengerLostMessage(currentPlayer, prevPlayer)
+        return
       case Played =>
         printLayedCards(currentPlayer, playedCards)
+        return
     }
   }
   

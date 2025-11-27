@@ -19,10 +19,11 @@ case class GameModel(
   turnState: TurnState = NoTurn,
   amountPlayed: Int = 0,
   lastAccusedIndex: Int = 0,
+  logHistory: List[String] = Nil
 ) {
 
   def setupPlayers(list: List[String]): GameModel =  {
-    this.copy(players = list.map(p => Player(name = p)))
+    this.copy(players = list.map(p => Player(name = p, playerType = Human)))
   }
 
   def dealCards(): GameModel = {
@@ -46,14 +47,14 @@ case class GameModel(
     this.copy(
       playOrder = newPlayOrder,
       currentPlayerIndex = newPlayOrder.head,
-      turnState = TurnState.NoTurn
+      turnState = NeedsRankInput
     )
   }
 
   def setupRank(rank: String): GameModel = {
     this.copy(
       roundRank = rank,
-      turnState = NoChallenge
+      turnState = NeedsCardInput
     )
   }
 
@@ -132,11 +133,14 @@ case class GameModel(
         ((currentIndexInOrder + 1) % orderSize, this.roundRank)
     }
     val nextInModel = playOrder(next)
+    val nextTurnState = if (newRoundRank.isEmpty) NeedsRankInput else NeedsChallengeDecision
     this.copy(
       roundRank = newRoundRank,
       currentPlayerIndex = nextInModel,
       lastPlayerIndex = currentPlayerIndex,
-      turnState = NoTurn
+      turnState = nextTurnState
     )
   }
+  
+  def addLog(entry: String): GameModel = this.copy(logHistory = logHistory :+ entry)
 }

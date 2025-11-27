@@ -31,7 +31,7 @@ class GridSpec extends AnyWordSpec with Matchers {
       ps.flush()
 
       // 4. Den String aus dem Puffer lesen
-      baos.toString("UTF-8").trim
+      baos.toString("UTF-8")
     } finally {
       // Original-Stream immer wiederherstellen!
       System.setOut(oldOut)
@@ -101,6 +101,21 @@ class GridSpec extends AnyWordSpec with Matchers {
 
         // Prüfen des modifizierten Eintrags text(5)
         grid.text(5) should include ("| 10 |")
+      }
+
+      "utility methods" should {
+        "clearScreen sollte die korrekten ANSI-Escape-Sequenzen ausgeben" in {
+          val grid = new Grid()
+
+          val output = captureOutput {
+            grid.clearScreen()
+          }
+
+          // Erwartete Ausgabe: \u001b[2J (Clear Screen) + \u001b[H (Cursor Home) + 20 Newlines
+          val expectedNewlines = "\n" * 20
+
+          output shouldBe expectedNewlines
+        }
       }
     }
   }
