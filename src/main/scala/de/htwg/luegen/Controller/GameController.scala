@@ -8,6 +8,30 @@ import scala.collection.mutable.ListBuffer
 import scala.compiletime.uninitialized
 import scala.annotation.tailrec
 
+trait GameCommand {
+  def execute(model: GameModel): GameModel
+}
+
+case class HandleRoundRankCommand(rank: String) extends GameCommand {
+  override def execute(model: GameModel): GameModel = model.setupRank(rank)
+}
+
+case class HandleCardPlayCommand(cardIndices: List[Int]) extends GameCommand {
+  override def execute(model: GameModel): GameModel = {
+    val modelAfterPlay = model.playCards(cardIndices)
+    modelAfterPlay.setNextPlayer()
+  }
+}
+
+case class HandleChallengeDecisionCommand(callsLie: Boolean) extends GameCommand {
+  override def execute(model: GameModel): GameModel = model.playerTurn(callsLie)
+}
+
+case object HandleTurnEndCommand extends GameCommand {
+  override def execute(model: GameModel): GameModel = model.setNextPlayer()
+}
+
+
 class GameController(var model: GameModel) extends Observable {
   private val observers: ListBuffer[Observer] = ListBuffer()
 
@@ -17,10 +41,17 @@ class GameController(var model: GameModel) extends Observable {
 
   override def notifyObservers(): Unit = observers.foreach(_.updateDisplay())
   
+  private def executeCommand(command: GameCommand): GameModel = {
+    model = command.execute(model)
+    notifyObservers()
+    model
+  }
+  
   def initGame(): GameModel = {
     notifyObservers()
     model
   }
+  
   def setupGame(numPlayers: Int, names: List[String]): GameModel = {
     model = model.setupPlayers(names)
     model = model.dealCards()
@@ -31,25 +62,19 @@ class GameController(var model: GameModel) extends Observable {
   }
 
   def handleRoundRank(rank: String): GameModel = {
-    model = model.copy(roundRank = rank)
-    notifyObservers()
-    model
+    executeCommand(HandleRoundRankCommand(rank))
   }
 
   def handleCardPlay(cardIndices: List[Int]): GameModel = {
-    model  = model.playCards(cardIndices)
-    model = model.setNextPlayer()
-    notifyObservers()
-    model
+    executeCommand(HandleCardPlayCommand(cardIndices))
   }
-
+  
   def handleChallengeDecision(callsLie: Boolean): GameModel = {
-    model = model.playerTurn(callsLie)
-    if (model.turnState != Played) {
-      model = model.setNextPlayer()
-    }
-    notifyObservers()
-    model
+    executeCommand(HandleChallengeDecisionCommand(callsLie))
+  }
+  
+  def handleTurnEnd(): GameModel = {
+    executeCommand(HandleTurnEndCommand)
   }
 
   def getCurrentPlayers = model.players
