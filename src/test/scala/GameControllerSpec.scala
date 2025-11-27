@@ -190,6 +190,16 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
         controller.getPlayedCards should contain theSameElementsAs List(cardA)
         controller.getCurrentPlayer.name shouldBe "P2" // Spieler hat gewechselt
       }
+
+      "getCurrentPlayerType should return the player type" in {
+        val model = GameModel()
+        val modelWithPlayer = model.copy(
+          players = List(Player("test", playerType = Human)),
+          currentPlayerIndex = 0
+        )
+        val received = controller.getCurrentPlayerType
+        received shouldBe Human
+      }
     }
   }
 }

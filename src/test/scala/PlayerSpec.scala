@@ -10,6 +10,15 @@ class PlayerSpec extends AnyWordSpec with Matchers {
   val card3 = Card("D", "2")  // "D2" (Länge 2)
 
   "A Player (Functional)" when {
+
+    "initialized with default values" should {
+      "set correct defualt values (emtpy name, empty hand)" in {
+        val defaultPlayer = Player()
+        defaultPlayer.name shouldBe ""
+        defaultPlayer.hand shouldBe empty
+        defaultPlayer.playerType shouldBe Human
+      }
+    }
     "managing its hand" should {
 
       "addCards sollte ein NEUES Player-Objekt zurückgeben und die Hand erweitern" in {
