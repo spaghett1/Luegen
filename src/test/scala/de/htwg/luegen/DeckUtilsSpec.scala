@@ -1,7 +1,8 @@
-package de.htwg.luegen.Model.Utils
+package de.htwg.luegen
 
-import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.Model.Utils.DeckUtils
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 class DeckUtilsSpec extends AnyWordSpec with Matchers {
 

@@ -29,7 +29,6 @@ case class GameModel(
   def dealCards(): GameModel = {
     val deck = DeckUtils.shuffle(DeckUtils.createDeck())
 
-    // Karten aus dem Deck verteilen
     val updatedPlayers = deck.zipWithIndex.foldLeft(players) { case (accPlayers, (card, i)) =>
       val playerIndex = i % players.length
       val player = accPlayers(playerIndex)
@@ -78,7 +77,7 @@ case class GameModel(
     if (callsLie) {
       evaluateReveal()
     } else {
-      this.copy(turnState = NoChallenge)
+      this.copy(turnState = NeedsCardInput)
     }
   }
 
@@ -141,6 +140,6 @@ case class GameModel(
       turnState = nextTurnState
     )
   }
-  
+
   def addLog(entry: String): GameModel = this.copy(logHistory = logHistory :+ entry)
 }

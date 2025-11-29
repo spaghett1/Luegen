@@ -1,7 +1,8 @@
-package de.htwg.luegen.View
+package de.htwg.luegen
 
 import de.htwg.luegen.Controller.GameController
 import de.htwg.luegen.Model.{Card, GameModel, Player}
+import de.htwg.luegen.View.{GameView}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

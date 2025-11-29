@@ -1,9 +1,9 @@
-package de.htwg.luegen.Model.Utils
+package de.htwg.luegen
 
 import de.htwg.luegen.Model.Player
-
-import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.Model.Utils.TurnOrderUtils
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 class TurnOrderUtilsSpec extends AnyWordSpec with Matchers {
 

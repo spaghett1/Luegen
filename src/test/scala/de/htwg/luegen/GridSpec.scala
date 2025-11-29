@@ -1,12 +1,11 @@
-package de.htwg.luegen.Test
+package de.htwg.luegen
 
 import de.htwg.luegen.Model.Player
-import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.View.Grid
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayOutputStream, PrintStream}
-import de.htwg.luegen.View.Grid
-
 import scala.Console.withOut
 import scala.util.Try
 

@@ -1,11 +1,12 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import de.htwg.luegen.Model._
+import de.htwg.luegen.Controller.{GameController, Observer}
+import de.htwg.luegen.Model.*
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
-import de.htwg.luegen.Controller.Observer
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+
 import scala.util.Random
 
 // Einfacher Dummy-Observer

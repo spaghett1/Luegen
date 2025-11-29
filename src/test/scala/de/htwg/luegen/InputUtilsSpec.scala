@@ -1,13 +1,13 @@
-package de.htwg.luegen.Test
+package de.htwg.luegen
 
 import de.htwg.luegen.View.InputUtils.*
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, PrintStream}
+import scala.Console.{withIn, withOut}
 import scala.io.StdIn
-import scala.util.Try
-import scala.Console.{withIn, withOut} // Wichtige Imports
+import scala.util.Try // Wichtige Imports
 
 class InputUtilsSpec extends AnyWordSpec with Matchers {
 

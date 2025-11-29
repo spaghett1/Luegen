@@ -16,10 +16,9 @@ class GameView(controller: GameController) extends Observer {
     val players = controller.getCurrentPlayers
     val playedCards = controller.getPlayedCards
     val discardedCount = controller.getDiscardedCount
-    val currentPlayer = controller.getCurrentPlayer
     val roundRank = controller.getRoundRank
     val state = controller.getTurnState
-    val playerType = controller.getCurrentPlayerType
+    val log = controller.getLog
 
     if (players.isEmpty) {
       val numPlayers = getNum
@@ -28,6 +27,9 @@ class GameView(controller: GameController) extends Observer {
       controller.setupGame(numPlayers, playerNames)
       return
     }
+
+    val currentPlayer = controller.getCurrentPlayer
+    val playerType = controller.getCurrentPlayerType
 
     if (players.nonEmpty && grid.text(0).isEmpty) {
       initGrid(players)
@@ -41,6 +43,8 @@ class GameView(controller: GameController) extends Observer {
     }
 
     val prevPlayer = controller.getPrevPlayer
+
+    //println(log)
 
     state match {
       case NeedsRankInput =>

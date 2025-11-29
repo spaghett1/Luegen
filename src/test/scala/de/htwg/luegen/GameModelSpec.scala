@@ -1,9 +1,11 @@
-package de.htwg.luegen.Model
+package de.htwg.luegen
 
+import de.htwg.luegen.Model.{Card, GameModel, Player}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+
 import scala.util.Random
 
 class GameModelSpec extends AnyWordSpec with Matchers {
@@ -117,7 +119,7 @@ class GameModelSpec extends AnyWordSpec with Matchers {
       "playerTurn should set turnState to NoChallenge if callsLie = false" in {
         val model = setupInitialModel()
         val modelAfterTurn = model.playerTurn(false)
-        modelAfterTurn.turnState shouldBe NoChallenge
+        modelAfterTurn.turnState shouldBe NeedsCardInput
       }
 
       "evaluateReveal sollte LieWon und korrekten Zustand zurückgeben, wenn gelogen wurde" in {

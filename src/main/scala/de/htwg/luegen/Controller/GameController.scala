@@ -87,4 +87,5 @@ class GameController(var model: GameModel) extends Observable {
   def getRoundRank = model.roundRank
   def getTurnState = model.turnState
   def getPlayedCards = model.lastPlayedCards
+  def getLog = model.logHistory
 }

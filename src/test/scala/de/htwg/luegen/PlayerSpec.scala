@@ -1,7 +1,10 @@
-package de.htwg.luegen.Model
+package de.htwg.luegen
 
-import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.Model.{Card, Player}
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import de.htwg.luegen.Model
+import de.htwg.luegen.Model.Human
 
 class PlayerSpec extends AnyWordSpec with Matchers {
 
