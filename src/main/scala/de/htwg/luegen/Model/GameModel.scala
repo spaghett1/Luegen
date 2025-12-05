@@ -11,6 +11,7 @@ case class GameModel(
   discardedCards: List[Card] = Nil,
   roundRank: String = "",
   lastPlayedCards: List[Card] = Nil,
+  playerCount: Int = 0,
   players: List[Player] = List.empty,
   currentPlayerIndex: Int = 0,
   lastPlayerIndex: Int = 0,
@@ -21,7 +22,9 @@ case class GameModel(
   lastAccusedIndex: Int = 0,
   logHistory: List[String] = Nil
 ) {
-
+  
+  def setPlayerCount(num: Int) = this.copy(playerCount = num)
+  
   def setupPlayers(list: List[String]): GameModel =  {
     this.copy(players = list.map(p => Player(name = p, playerType = Human)))
   }

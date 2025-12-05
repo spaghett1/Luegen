@@ -4,15 +4,29 @@ import de.htwg.luegen.Controller.Observer
 import de.htwg.luegen.Controller.GameController
 import de.htwg.luegen.View.InputUtils.*
 import de.htwg.luegen.Model.*
+import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
+
 import scala.util.Try
+import de.htwg.luegen.View.*
 
 class GameView(controller: GameController) extends Observer {
   private val grid = new Grid
   
   controller.registerObserver(this)
+
+  private val stateToScreen: Map[TurnState, GameScreen] = Map(
+    NeedsRankInput -> NeedsRankInputScreen,
+    NeedsCardInput -> NeedsCardInputScreen,
+    NeedsChallengeDecision -> NeedsChallengeDecisionScreen,
+    ChallengedLieWon -> ChallengedLieWonScreen,
+    ChallengedLieLost -> ChallengedLieLostScreen,
+    Played -> PlayedScreen,
+  )
   
   override def updateDisplay(): Unit = {
+
+    val playerCount = controller.getPlayerCount
     val players = controller.getCurrentPlayers
     val playedCards = controller.getPlayedCards
     val discardedCount = controller.getDiscardedCount
@@ -20,11 +34,18 @@ class GameView(controller: GameController) extends Observer {
     val state = controller.getTurnState
     val log = controller.getLog
 
-    if (players.isEmpty) {
-      val numPlayers = getNum
-      val playerNames = (1 to numPlayers).map(getPlayerName).toList
+    println(log)
 
-      controller.setupGame(numPlayers, playerNames)
+    if (playerCount == 0) {
+      val numPlayers = getNum
+
+      controller.setupPlayerCount(numPlayers)
+      return
+    }
+
+    if (players.isEmpty) {
+      val playerNames = (1 to playerCount).map(getPlayerName).toList
+      controller.setupPlayers(playerNames)
       return
     }
 
@@ -44,42 +65,15 @@ class GameView(controller: GameController) extends Observer {
 
     val prevPlayer = controller.getPrevPlayer
 
-    //println(log)
-
-    state match {
-      case NeedsRankInput =>
-        val rank = playerType match {
-          case Human => callRank(controller.isValidRanks)
-          case AI => controller.isValidRanks.head
-        }
-        controller.handleRoundRank(rank)
-        return
-
-      case NeedsCardInput =>
-        val input = playerType match {
-          case Human => selectCards(currentPlayer)
-          case AI => List(1)
-        }
-        controller.handleCardPlay(input)
-        return
-      case NeedsChallengeDecision =>
-        val callsLie = playerType match {
-          case Human => readYesNo(currentPlayer)
-          case AI => false
-        }
-        controller.handleChallengeDecision(callsLie)
-        return
-      case ChallengedLieWon =>
-        challengerWonMessage(currentPlayer, prevPlayer)
-        return
-      case ChallengedLieLost =>
-        challengerLostMessage(currentPlayer, prevPlayer)
-        return
-      case Played =>
-        printLayedCards(currentPlayer, playedCards)
-        return
+    stateToScreen.get(state) match {
+      case Some(screen) =>
+        screen.renderAndHandleInput(controller, this)
+      case None =>
+        println("Ungueltiger Zustand!")
     }
   }
+
+
   
   def initGrid(players: List[Player]) = {
     grid.initGrid(players)
