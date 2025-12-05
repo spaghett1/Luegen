@@ -1,12 +1,7 @@
 package de.htwg.luegen.Controller
 
-import de.htwg.luegen.View.*
 import de.htwg.luegen.Model.*
-import de.htwg.luegen.TurnState.*
-
 import scala.collection.mutable.ListBuffer
-import scala.compiletime.uninitialized
-import scala.annotation.tailrec
 
 trait GameCommand {
   def execute(model: GameModel): GameModel
@@ -64,6 +59,10 @@ class GameController(var model: GameModel) extends Observable {
     notifyObservers()
     model
   }
+  
+  def nextTurn(): GameModel = {
+    executeCommand(NextTurnCommand())
+  }
 
   def handleRoundRank(rank: String): GameModel = {
     executeCommand(HandleRoundRankCommand(rank))
@@ -76,6 +75,10 @@ class GameController(var model: GameModel) extends Observable {
   def handleChallengeDecision(callsLie: Boolean): GameModel = {
     executeCommand(HandleChallengeDecisionCommand(callsLie))
   }
+  
+  case class NextTurnCommand() extends GameCommand {
+    override def execute(model: GameModel): GameModel = model.setNextPlayer()
+  }
 
   def getCurrentPlayers = model.players
   def getDiscardedCount = model.discardedCards.length
@@ -87,5 +90,5 @@ class GameController(var model: GameModel) extends Observable {
   def getRoundRank = model.roundRank
   def getTurnState = model.turnState
   def getPlayedCards = model.lastPlayedCards
-  def getLog = model.logHistory
+  def getLog: List[String] = model.logHistory
 }
