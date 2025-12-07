@@ -17,16 +17,20 @@ case class GameModel(
   lastPlayerIndex: Int = 0,
   validRanks: List[String] = List("2","3","4","5","6","7","8","9","10","B","D","K","A"),
   playOrder: List[Int] = List.empty,
-  turnState: TurnState = NoTurn,
+  turnState: TurnState = NeedsPlayerCount,
   amountPlayed: Int = 0,
   lastAccusedIndex: Int = 0,
+  lastInputError: Option[String] = None,
   logHistory: List[String] = Nil
 ) {
-  
-  def setPlayerCount(num: Int) = this.copy(playerCount = num)
-  
+
+  def setPlayerCount(num: Int) = this.copy(playerCount = num, turnState = NeedsPlayerNames)
+
   def setupPlayers(list: List[String]): GameModel =  {
-    this.copy(players = list.map(p => Player(name = p, playerType = Human)))
+    this.copy(
+      players = list.map(p => Player(name = p, playerType = Human)),
+      turnState = NeedsRankInput
+    )
   }
 
   def dealCards(): GameModel = {
@@ -49,7 +53,6 @@ case class GameModel(
     this.copy(
       playOrder = newPlayOrder,
       currentPlayerIndex = newPlayOrder.head,
-      turnState = NeedsRankInput
     )
   }
 
@@ -145,4 +148,40 @@ case class GameModel(
   }
 
   def addLog(entry: String): GameModel = this.copy(logHistory = logHistory :+ entry)
+
+  def clearError(): GameModel = this.copy(lastInputError = None)
+
+  def createMemento(): Memento = {
+    Memento(
+      discardedCards,
+      roundRank,
+      lastPlayedCards,
+      playerCount,
+      players,
+      currentPlayerIndex,
+      lastPlayerIndex,
+      validRanks,
+      playOrder,
+      turnState,
+      amountPlayed,
+      lastAccusedIndex,
+    )
+  }
+
+  def restoreMemento(memento: Memento): GameModel = {
+    this.copy(
+      discardedCards = memento.discardedCards,
+      roundRank = memento.roundRank,
+      lastPlayedCards = memento.lastPlayedCards,
+      playerCount = memento.playerCount,
+      players = memento.players,
+      currentPlayerIndex = memento.currentPlayerIndex,
+      lastPlayerIndex = memento.lastPlayerIndex,
+      validRanks = memento.validRanks,
+      playOrder = memento.playOrder,
+      turnState = memento.turnState,
+      amountPlayed = memento.amountPlayed,
+      lastAccusedIndex = memento.lastAccusedIndex,
+    )
+  }
 }

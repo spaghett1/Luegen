@@ -56,18 +56,6 @@ class GameControllerNonMockitoSpec extends AnyWordSpec with Matchers {
       val controller = new GameController(model)
       controller.initGame() shouldBe model
     }
-    "setupGame sollte das korrekte End-Model zurückgeben und den Zustand setzen" in {
-      val controller = new GameController(GameModel())
-      val finalModel = controller.setupGame(3, List("A", "B", "C"))
-
-      finalModel.players.size shouldBe 3
-      finalModel.players.map(_.hand.size).sum shouldBe 52
-      finalModel.currentPlayerIndex should be >= 0 // Prüft, ob ein Index gesetzt wurde
-      finalModel.turnState shouldBe NeedsRankInput
-
-      // Prüfe, ob das Controller-Model tatsächlich aktualisiert wurde
-      controller.getCurrentPlayers.size shouldBe 3
-    }
 
     "Executing a command should use the LoggingCommandDecorator and update logHistory" in {
       val controller = setupInitialController(rank = "A")

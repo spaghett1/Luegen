@@ -2,12 +2,12 @@ package de.htwg.luegen.View
 
 import de.htwg.luegen.Controller.Observer
 import de.htwg.luegen.Controller.GameController
-import de.htwg.luegen.View.InputUtils.*
 import de.htwg.luegen.Model.*
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
 
 import scala.util.Try
+import scala.io.StdIn
 import de.htwg.luegen.View.*
 
 class GameView(controller: GameController) extends Observer {
@@ -16,6 +16,8 @@ class GameView(controller: GameController) extends Observer {
   controller.registerObserver(this)
 
   private val stateToScreen: Map[TurnState, GameScreen] = Map(
+    NeedsPlayerCount -> NeedsPlayerCountScreen,
+    NeedsPlayerNames -> NeedsPlayerNamesScreen,
     NeedsRankInput -> NeedsRankInputScreen,
     NeedsCardInput -> NeedsCardInputScreen,
     NeedsChallengeDecision -> NeedsChallengeDecisionScreen,
@@ -36,34 +38,14 @@ class GameView(controller: GameController) extends Observer {
 
     println(log)
 
-    if (playerCount == 0) {
-      val numPlayers = getNum
-
-      controller.setupPlayerCount(numPlayers)
-      return
-    }
-
-    if (players.isEmpty) {
-      val playerNames = (1 to playerCount).map(getPlayerName).toList
-      controller.setupPlayers(playerNames)
-      return
-    }
-
-    val currentPlayer = controller.getCurrentPlayer
-    val playerType = controller.getCurrentPlayerType
-
-    if (players.nonEmpty && grid.text(0).isEmpty) {
-      initGrid(players)
-    }
-
-    grid.printGrid(discardedCount)
-
     if (players.nonEmpty) {
-      displayPlayerHand(currentPlayer)
+      val player = controller.getCurrentPlayer
+
+      grid.initGrid(players)
+      grid.printGrid(discardedCount)
+      displayPlayerHand(player)
       println(s"Aktueller Rang: ${if (roundRank.isEmpty) "Keiner" else roundRank }")
     }
-
-    val prevPlayer = controller.getPrevPlayer
 
     stateToScreen.get(state) match {
       case Some(screen) =>
@@ -72,51 +54,9 @@ class GameView(controller: GameController) extends Observer {
         println("Ungueltiger Zustand!")
     }
   }
-
-
   
   def initGrid(players: List[Player]) = {
     grid.initGrid(players)
-  }
-
-  def getNum: Int = {
-    retryUntilValid(
-      prompt = "Wieviele Spieler? (2-8)",
-      parse = str => Try(str.toInt).toOption,
-      validate = n => n >= 2 && n <= 8)
-  }
-
-  def getPlayerName(i: Int): String = {
-    retryUntilValid(
-      prompt = s"Name von Spieler $i (max. 10 Zeichen)",
-      parse = str => Option(str).map(_.trim),
-      validate = name => name.nonEmpty && name.length <= 10
-    )
-  }
-
-  def callRank(valid: List[String]): String = {
-    retryUntilValid(
-      prompt = s"Gebe ein Symbol fuer die Runde ein, (2-10,B,D,K,A)",
-      parse = Option(_).map(_.trim),
-      validate = valid.contains(_)
-    )
-  }
-
-  def selectCards(player: Player): List[Int] = {
-    retryUntilValid(
-      prompt = "Waehle bis zu drei Karten (durch Kommas getrennt)",
-      parse = input => Try(input.split(",").map(_.trim.toInt).toList).toOption,
-      validate = sel => sel.forall(i => i >= 1 && i <= player.hand.size) && sel.size <= 3
-    )
-  }
-
-  def readYesNo(player: Player): Boolean = {
-    val input = retryUntilValid(
-      prompt = s"Luege von Spieler ${player.name} aufdecken?",
-      parse = Option(_).map(_.trim.toLowerCase),
-      validate = s => s == "j" || s == "n"
-    )
-    input == "j"
   }
 
   def printPrompt(prompt: String): Unit = {

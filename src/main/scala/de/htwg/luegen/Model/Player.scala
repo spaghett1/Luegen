@@ -1,7 +1,5 @@
 package de.htwg.luegen.Model
 
-import de.htwg.luegen.View.InputUtils
-
 sealed trait PlayerType
 case object Human extends PlayerType
 case object AI extends PlayerType
