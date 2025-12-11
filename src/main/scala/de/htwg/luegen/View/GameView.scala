@@ -11,7 +11,7 @@ import scala.io.StdIn
 import de.htwg.luegen.View.*
 
 class GameView(controller: GameController) extends Observer {
-  private val grid = new Grid
+  private var grid = new Grid
   
   controller.registerObserver(this)
 
@@ -41,8 +41,9 @@ class GameView(controller: GameController) extends Observer {
     if (players.nonEmpty) {
       val player = controller.getCurrentPlayer
 
-      grid.initGrid(players)
-      grid.printGrid(discardedCount)
+      grid = grid.updateGridWithPlayers(players)
+      val output = grid.updateGridWithNumber(discardedCount)
+      println(output)
       displayPlayerHand(player)
       println(s"Aktueller Rang: ${if (roundRank.isEmpty) "Keiner" else roundRank }")
     }

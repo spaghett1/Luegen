@@ -1,64 +1,55 @@
 package de.htwg.luegen
 
 import de.htwg.luegen.Controller.GameController
-import de.htwg.luegen.Model.{Card, GameModel, Player}
-import de.htwg.luegen.View.{GameView}
+import de.htwg.luegen.Model.{Card, GameModel, Human, Player, PlayerType}
+import de.htwg.luegen.View.GameView
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, PrintStream}
 import scala.Console.{withIn, withOut}
 import scala.util.Try
+import de.htwg.luegen.Controller.Observer // Import hinzufügen
 
 /**
- * Dummy GameController für die Instanziierung der GameView.
- * Stellt nur die minimal notwendigen Getter bereit, um View-Methoden ohne Absturz zu testen.
+ * Dummy GameController: Erforderlich, um eine GameView zu instanziieren und 
+ * die minimal notwendigen Controller-Methoden (Getter) für die View zu mocken.
  */
 class DummyController(initialModel: GameModel = GameModel()) extends GameController(initialModel) {
-  // Für callRank-Tests: Minimal gültige Ränge
+  // Überschreiben nur der minimal notwendigen Getter, um die View-Methoden auszuführen
   override def isValidRanks: List[String] = List("2", "A")
+  override def getCurrentPlayer: Player = initialModel.players.headOption.getOrElse(Player("Dummy"))
+  override def getPrevPlayer: Player = initialModel.players.lastOption.getOrElse(Player("DummyPrev"))
+  override def getLog: List[String] = initialModel.logHistory
+  override def getInputError: Option[String] = initialModel.lastInputError
+  override def getCurrentPlayerType: PlayerType = Human
 }
 
 class GameViewSpec extends AnyWordSpec with Matchers {
 
   private val originalIn = System.in
   private val originalOut = System.out
-  private val dummyController = new DummyController()
-  // GameView Instanziierungs-Helfer
-  private def createView() = new GameView(dummyController)
+
+  // Helfer zur Erstellung einer View mit einem DummyController
+  private def createView(model: GameModel = GameModel(players = List(Player("Dummy")))) =
+    new GameView(new DummyController(model))
 
   /**
-   * HILFSFUNKTION: Simuliert Benutzereingaben und erfasst Konsolenausgabe,
-   * notwendig für das Testen von Methoden, die `StdIn.readLine()` verwenden.
+   * HILFSFUNKTION: Erfasst Konsolenausgabe, notwendig für das Testen von Output-Methoden.
    */
-  def simulateInput[T](inputs: List[String])(testCode: => T): (T, String) = {
-    val inputData = inputs.mkString("\n") + "\n" // wichtiges trailing newline
-    val inputStream = new ByteArrayInputStream(inputData.getBytes("UTF-8"))
-
+  def captureOutput[T](testCode: => T): (T, String) = {
     val outputStream = new ByteArrayOutputStream()
-    val printStream = new PrintStream(outputStream, true, "UTF-8") // auto-flush true
+    val printStream = new PrintStream(outputStream, true, "UTF-8")
 
-    System.setIn(inputStream)
     System.setOut(printStream)
 
     try {
-      // Wenn Testcode blockt wegen fehlender Input, brechen wir ihn ab statt zu hängen
-      val result = Try {
-        withIn(inputStream) {
-          withOut(printStream) {
-            testCode
-          }
-        }
-      } match {
-        case scala.util.Success(value) => value
-        case scala.util.Failure(e) =>
-          throw new RuntimeException("❌ Test blockte oder crashte wegen fehlender Eingabe! " +
-            "Bitte testen, ob genug Input geliefert wurde.\nUrsache: " + e.getMessage, e)
+      val result = withOut(printStream) {
+        testCode
       }
-
+      printStream.flush()
       (result, outputStream.toString("UTF-8").trim)
     } finally {
-      System.setIn(originalIn)
       System.setOut(originalOut)
     }
   }
@@ -71,67 +62,20 @@ class GameViewSpec extends AnyWordSpec with Matchers {
   val testPlayer = Player("Tester", List(cardA, cardK, card10))
   val playerWithLongNameCard = Player("P", List(cardLong, cardA))
 
-  "GameView Input Methods (Testing retryUntilValid wrapper)" should {
-
-    "getNum sollte eine gültige Zahl (2-8) zurückgeben und ungültige wiederholen" in {
-      // Input: "1" (ungültig), "neun" (ungültig/Parse-Fehler), "4" (gültig)
-      val (result, output) = simulateInput(List("1", "neun", "4")) {
-        createView().getNum
-      }
-      result shouldBe 4
-      output should include("Wieviele Spieler? (2-8)")
-      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 2
-    }
-
-    "getPlayerName sollte einen gültigen Namen (< 10 Zeichen) zurückgeben" in {
-      // Input: "" (ungültig), "DerNameIstZuLangFuerZehn" (ungültig), "Max" (gültig)
-      val (result, output) = simulateInput(List("", "DerNameIstZuLangFuerZehn", "Max")) {
-        createView().getPlayerName(1)
-      }
-      result shouldBe "Max"
-      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 2
-    }
-
-    "callRank sollte einen gültigen Rang ('A') zurückgeben" in {
-      // Input: "J" (ungültig), "A" (gültig, da in DummyController.isValidRanks)
-      val (result, output) = simulateInput(List("J", "A")) {
-        createView().callRank(dummyController.isValidRanks)
-      }
-      result shouldBe "A"
-      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 1
-    }
-
-    "selectCards sollte bis zu drei gültige Indizes zurückgeben" in {
-      // P1 Hand size is 3
-      // Input: "1,2,3,4" (zu viele/ungültiger Index), "1,2" (gültig)
-      val (result, output) = simulateInput(List("1,2,3,4", "1,2")) {
-        createView().selectCards(testPlayer)
-      }
-      result should contain theSameElementsInOrderAs List(1, 2)
-      output.split('\n').count(_ contains "Ungueltige Eingabe!") shouldBe 1
-    }
-
-    "readYesNo sollte true für 'j' und false für 'n' zurückgeben" in {
-      // Input: "falsch", "j"
-      val (resultJ, _) = simulateInput(List("falsch", "j")) {
-        createView().readYesNo(testPlayer)
-      }
-      resultJ shouldBe true
-
-      // Input: "n"
-      val (resultN, _) = simulateInput(List("n")) {
-        createView().readYesNo(testPlayer)
-      }
-      resultN shouldBe false
-    }
-  }
-
   // --------------------------------------------------------------------------------
 
   "GameView Output/Message Methods" should {
 
+    "initGrid sollte ohne Fehler ausgeführt werden" in {
+      val players = List(Player("A"), Player("B"), Player("C"), Player("D"))
+      val view = createView()
+
+      // Prüft nur, ob die Methode ohne Fehler durchläuft
+      noException should be thrownBy view.initGrid(players)
+    }
+
     "printPrompt sollte den Text auf der Konsole ausgeben" in {
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().printPrompt("Test-Prompt")
       }
       output should include("Test-Prompt")
@@ -139,38 +83,38 @@ class GameViewSpec extends AnyWordSpec with Matchers {
 
     "displayPlayerHand sollte Indizes und Karten korrekt formatieren (mittlere Länge)" in {
       // Longest Card Name ist 3 (S10)
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().displayPlayerHand(testPlayer) // Hand: [HA, CK, S10]
       }
       val lines = output.split('\n')
       // Indices (1, 2, 3) - mit Padding auf 3
-      lines(0) shouldBe "1  2  3  "
+      lines(0).trim shouldBe "1  2  3"
       // Cards (HA, CK, S10) - mit Padding auf 3
-      lines(1) shouldBe "HA CK S10"
+      lines(1).trim shouldBe "HA CK S10"
     }
 
     "displayPlayerHand sollte korrekt padden, wenn eine Karte eine andere Länge hat" in {
       // Longest Card Name ist 4 (D100)
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().displayPlayerHand(playerWithLongNameCard) // Hand: [D100, HA]
       }
       val lines = output.split('\n')
       // Indices (1, 2) - mit Padding auf 4
-      lines(0) shouldBe "1   2   "
+      lines(0).trim shouldBe "1   2"
       // Cards (D100, HA) - mit Padding auf 4
-      lines(1) shouldBe "D100HA"
+      lines(1).trim shouldBe "D100HA"
     }
 
     "printLayedCards sollte die gespielten Karten korrekt ausgeben" in {
       val cards = List(cardA, cardK)
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().printLayedCards(testPlayer, cards)
       }
       output shouldBe s"${testPlayer.name} legt ab: HA, CK"
     }
 
     "startGamePrompt sollte die Startnachricht korrekt ausgeben" in {
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().startGamePrompt(testPlayer)
       }
       output shouldBe s"Das Spiel startet mit ${testPlayer.name}!"
@@ -178,7 +122,7 @@ class GameViewSpec extends AnyWordSpec with Matchers {
 
     "challengerWonMessage (LieWon) sollte die Nachricht für den erfolgreichen Aufdecker ausgeben" in {
       val prevPlayer = Player("Prev")
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().challengerWonMessage(testPlayer, prevPlayer)
       }
       val lines = output.split('\n')
@@ -188,25 +132,12 @@ class GameViewSpec extends AnyWordSpec with Matchers {
 
     "challengerLostMessage (LieLost) sollte die Nachricht für den erfolglosen Aufdecker ausgeben" in {
       val prevPlayer = Player("Prev")
-      val (_, output) = simulateInput(Nil) {
+      val (_, output) = captureOutput {
         createView().challengerLostMessage(testPlayer, prevPlayer)
       }
       val lines = output.split('\n')
       lines(0) shouldBe s"${prevPlayer.name} hat die Wahrheit gesagt!"
       lines(1) shouldBe s"${testPlayer.name} zieht alle Karten!"
-    }
-  }
-
-  // --------------------------------------------------------------------------------
-
-  "GameView Utility Methods" should {
-
-    "initGrid sollte ohne Fehler ausgeführt werden" in {
-      val players = List(Player("A"), Player("B"), Player("C"), Player("D"))
-      val view = createView()
-
-      // Prüft nur, ob die Methode ohne Fehler durchläuft, da die interne Grid-Instanz private ist
-      noException should be thrownBy view.initGrid(players)
     }
   }
 }

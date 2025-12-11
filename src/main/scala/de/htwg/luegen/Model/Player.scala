@@ -1,6 +1,6 @@
 package de.htwg.luegen.Model
 
-sealed trait PlayerType
+trait PlayerType
 case object Human extends PlayerType
 case object AI extends PlayerType
 
