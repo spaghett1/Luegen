@@ -68,99 +68,40 @@ class GameController(var model: GameModel) extends Observable {
         model
     }
   }
-
-  def handleRawInput(rawInput: String): GameModel = {
-    model = rawInput.toLowerCase.trim match {
-      case "undo" => undo()
-      case "redo" => redo()
-      case _ =>
-        model.turnState match {
-          case NeedsPlayerCount => validatePlayerCount(rawInput)
-          case NeedsPlayerNames => validatePlayerNames(rawInput)
-          case NeedsRankInput =>  validateRank(rawInput)
-          case NeedsCardInput => validateCardInput(rawInput)
-          case NeedsChallengeDecision => validateChallengeDecision(rawInput)
-          case _ => model
-        }
-    }
+  
+  def initGame(): GameModel = {
     notifyObservers()
     model
   }
 
-  def validatePlayerCount(input: String): GameModel = {
-    input.toIntOption match {
-      case Some(n) if n > 0 && n < 9 =>
-        executeCommand(SetupPlayerCountCommand(n))
-      case _ =>
-        model.copy(
-          lastInputError = Some("Gebe eine gueltige Zahl ein!")
-        )
-    }
+  def handlePlayerCount(count: Int): GameModel = {
+    executeCommand(SetupPlayerCountCommand(count))
   }
 
-  def validatePlayerNames(input: String): GameModel = {
-    val names = input.split(",").map(_.trim).toList
-    val isValidCount = names.size == model.playerCount
-    val isValidName = names.nonEmpty && names.forall(name => name.nonEmpty && name.length <= 10)
-    if (isValidName && isValidCount) {
-      executeCommand(SetupPlayersCommand(names))
-    } else {
-      model.copy(
-        lastInputError = Some(s"Gebe ${model.playerCount} Namen durch Komma getrennt ein! (max 10 Zeichen)")
-      )
-    }
+  def handlePlayerNames(names: List[String]): GameModel = {
+    executeCommand(SetupPlayersCommand(names))
   }
 
-  def validateRank(input: String): GameModel = {
-    if (model.validRanks.contains(input)) {
-      executeCommand(HandleRoundRankCommand(input))
-    } else {
-      model.copy(
-        lastInputError = Some("Gebe einen gueltigen Rang ein!")
-      )
-    }
+  def handleRoundRank(rank: String): GameModel = {
+    executeCommand(HandleRoundRankCommand(rank))
   }
 
-  def validateCardInput(input: String): GameModel = {
-    val selIndicesOpt = Try {
-      input.split(",").map(_.trim.toInt).toList
-    }.toOption
-
-    selIndicesOpt match {
-      case Some(selIndices) =>
-        val player = model.players(model.currentPlayerIndex)
-        val playerHandSize = player.hand.size
-
-        val isValidQuantity = selIndices.size >= 1 && selIndices.size <= 3
-        val isValidRange = selIndices.forall(i => i >= 1 && i <= playerHandSize)
-
-        if (isValidQuantity && isValidRange) {
-          executeCommand(HandleCardPlayCommand(selIndices))
-        } else {
-          model.copy(
-            lastInputError = Some("Gebe gueltige Indices ein! (max 3 Indices)")
-          )
-        }
-      case _ =>
-        model.copy(
-          lastInputError = Some("Gebe gueltige Zahlen ein!")
-        )
-    }
+  def handleCardInput(selection: List[Int]): GameModel = {
+    executeCommand(HandleCardPlayCommand(selection))
   }
 
-  def validateChallengeDecision(input: String): GameModel = {
-    if (input == "j") {
-      executeCommand(HandleChallengeDecisionCommand(true))
-    } else if (input == "n") {
-      executeCommand(HandleChallengeDecisionCommand(false))
-    } else {
-      model.copy(
-        lastInputError = Some("Gebe 'j' oder 'n' ein!")
-      )
-    }
+  def handleChallengeDecision(decision: Boolean): GameModel = {
+    executeCommand(HandleChallengeDecisionCommand(decision))
   }
-  
-  def initGame(): GameModel = {
+
+  def handleError(e: Throwable): GameModel = {
+    val msg = e match {
+      case _: NumberFormatException => "Ungueltige Eingabe! Bitte geben sie Zahlen ein!"
+      case _ => e.getMessage
+    }
+    model = model.copy(
+      lastInputError = Some(msg)
+    )
     notifyObservers()
     model
   }
