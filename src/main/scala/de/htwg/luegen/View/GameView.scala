@@ -10,10 +10,9 @@ import scala.util.Try
 import scala.io.StdIn
 import de.htwg.luegen.View.*
 
-class GameView(controller: GameController) extends Observer {
+class GameView(val controller: GameController) extends Observer {
   private var grid = new Grid
   
-  controller.registerObserver(this)
 
   private val stateToScreen: Map[TurnState, GameScreen] = Map(
     NeedsPlayerCount -> NeedsPlayerCountScreen,
@@ -26,12 +25,36 @@ class GameView(controller: GameController) extends Observer {
     Played -> PlayedScreen,
   )
   
-  override def updateDisplay(): Unit = {
+  @volatile private var updatePending: Boolean = false
+  
+  override def updateDisplay(): Unit = synchronized {
+    updatePending = true
+    this.notify()
+  }
+  
+  def runTuiLoop(): Unit = {
+    renderStateAndHandleInput()
 
-    val playerCount = controller.getPlayerCount
-    val players = controller.getCurrentPlayers
-    val playedCards = controller.getPlayedCards
-    val discardedCount = controller.getDiscardedCount
+    while (true) {
+      synchronized {
+        while (!updatePending) {
+          try {
+            wait()
+          } catch {
+            case _: InterruptedException => Thread.currentThread().interrupt()
+          }
+        }
+        updatePending = false
+      }
+      
+      renderStateAndHandleInput()
+    }
+  }
+  
+  def renderStateAndHandleInput(): Unit = {
+    val model = controller.model
+    val players = model.players
+    val discardedCount = model.discardedCards.length
     val roundRank = controller.getRoundRank
     val state = controller.getTurnState
     val log = controller.getLog
@@ -40,7 +63,6 @@ class GameView(controller: GameController) extends Observer {
 
     if (players.nonEmpty) {
       val player = controller.getCurrentPlayer
-
       grid = grid.updateGridWithPlayers(players)
       val output = grid.updateGridWithNumber(discardedCount)
       println(output)
@@ -50,52 +72,15 @@ class GameView(controller: GameController) extends Observer {
 
     stateToScreen.get(state) match {
       case Some(screen) =>
-        screen.renderAndHandleInput(controller, this)
+        screen.renderAndHandleInput(controller)
       case None =>
         println("Ungueltiger Zustand!")
     }
   }
-  
-  def initGrid(players: List[Player]) = {
-    grid.initGrid(players)
-  }
 
-  def printPrompt(prompt: String): Unit = {
-    print(prompt)
-  }
-
-  def displayPlayerHand(player: Player): Unit = {
-    val width = player.longestCardName
-
-    val indices = (1 to player.hand.length)
-      .map(i => String.format(s"%-${width}s", i.toString))
-      .mkString
-
-    val cards = player.hand
-      .map(c => String.format(s"%-${width}s", c.toString))
-      .mkString
-
-    // todo
-    println(indices)
-    println(cards)
-
-  }
-
-  def printLayedCards(player: Player, cards: List[Card]) = {
-    println(s"${player.name} legt ab: ${cards.mkString(", ")}")
-  }
-  
-  def startGamePrompt(player: Player) = {
-    println(s"Das Spiel startet mit ${player.name}!")
-  }
-
-  def challengerWonMessage(player: Player, prevPlayer: Player) = {
-    println(s"${prevPlayer.name} hat gelogen!")
-    println("Er zieht alle Karten.")
-  }
-
-  def challengerLostMessage(player: Player, prevPlayer: Player) = {
-    println(s"${prevPlayer.name} hat die Wahrheit gesagt!")
-    println(s"${player.name} zieht alle Karten!")
-  }
+  def initGrid(players: List[Player]) = { }
+  def printPrompt(prompt: String): Unit = { }
+  def displayPlayerHand(player: Player): Unit = { }
+  def printLayedCards(player: Player, cards: List[Card]) = { }
+  def startGamePrompt(player: Player) = { }
 }

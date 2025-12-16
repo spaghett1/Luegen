@@ -1,7 +1,6 @@
 package de.htwg.luegen.View
 import de.htwg.luegen.Controller.GameController
 import de.htwg.luegen.Model.{AI, Human}
-import de.htwg.luegen.View.GameView
 
 import scala.io.StdIn
 import scala.util.Try
@@ -9,14 +8,14 @@ import scala.util.Failure
 import scala.util.Success
 
 trait GameScreen {
-  def renderAndHandleInput(controller: GameController, view: GameView): Unit
+  def renderAndHandleInput(controller: GameController): Unit
 
   def handleGlobalCommand(controller: GameController, rawInput: String): Boolean = {
     rawInput match {
-      case "undo" => 
+      case "undo" =>
         controller.undo()
         true
-      case "redo" => 
+      case "redo" =>
         controller.redo()
         true
       case _ => false
@@ -33,7 +32,7 @@ case object NeedsPlayerCountScreen extends GameScreen {
     }
   }
 
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Wieviele Spieler? (2 - 8)")
@@ -48,7 +47,7 @@ case object NeedsPlayerCountScreen extends GameScreen {
 }
 
 case object NeedsPlayerNamesScreen extends GameScreen {
-  
+
   def validateInput(rawInput: String, playerCount: Int): Try[List[String]] = {
     val names = rawInput.split(",").map(_.trim).toList
     val isValidCount = names.size == playerCount
@@ -57,13 +56,13 @@ case object NeedsPlayerNamesScreen extends GameScreen {
     if (isValidCount && isValidName) Success(names)
     else Failure(new Exception(s"Gebe $playerCount Namen durch Komma getrennt ein! (max. 10 Zeichen"))
   }
-  
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Gebe die Spielernamen ein(getrennt durch Kommas)")
     val input = StdIn.readLine()
-    
+
     if (!handleGlobalCommand(controller, input)) {
       validateInput(input, controller.getPlayerCount) match {
         case Success(names) => controller.handlePlayerNames(names)
@@ -74,7 +73,7 @@ case object NeedsPlayerNamesScreen extends GameScreen {
 }
 
 case object NeedsRankInputScreen extends GameScreen {
-  
+
   def validateInput(rawInput: String, validRanks: List[String]): Try[String] = {
     val rank = rawInput.trim
     if (validRanks.contains(rank)) {
@@ -83,8 +82,8 @@ case object NeedsRankInputScreen extends GameScreen {
       Failure(new Exception("Gebe einen gueltigen Rang ein!"))
     }
   }
-  
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Sage einen Rang fuer die Runde an (2-10, B,D,K,A): ")
@@ -93,7 +92,7 @@ case object NeedsRankInputScreen extends GameScreen {
       case Human => StdIn.readLine()
       case AI => controller.isValidRanks.head
     }
-    
+
     if (!handleGlobalCommand(controller, rawInput)) {
       validateInput(rawInput, controller.isValidRanks) match {
         case Success(rank) => controller.handleRoundRank(rank)
@@ -104,13 +103,13 @@ case object NeedsRankInputScreen extends GameScreen {
 }
 
 case object NeedsCardInputScreen extends GameScreen {
-  
+
   def validateInput(rawInput: String, playerHandSize: Int): Try[List[Int]] = {
     val parsedTry = Try {rawInput.split(",").map(_.trim.toInt).toList }
-    parsedTry.flatMap { selIndices => 
+    parsedTry.flatMap { selIndices =>
       val isValidQuantity = selIndices.size >= 1 && selIndices.size <= 3
       val isValidRange = selIndices.forall(i => i >= 1 && i <= playerHandSize)
-      
+
       if (isValidQuantity && isValidRange) {
         Success(selIndices)
       } else {
@@ -118,8 +117,8 @@ case object NeedsCardInputScreen extends GameScreen {
       }
     }
   }
-  
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Gebe Kartenindices ein, getrennt durch Kommas (max. 10 Zeichen): ")
@@ -129,7 +128,7 @@ case object NeedsCardInputScreen extends GameScreen {
       case Human => StdIn.readLine()
       case AI => "1"
     }
-    
+
     if (!handleGlobalCommand(controller, rawInput)) {
       validateInput(rawInput, currentPlayer.hand.size) match {
         case Success(indices) => controller.handleCardInput(indices)
@@ -140,10 +139,14 @@ case object NeedsCardInputScreen extends GameScreen {
 }
 
 case object ChallengedLieWonScreen extends GameScreen {
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
-    view.challengerWonMessage(currentPlayer, prevPlayer)
+    
+    println(s"${prevPlayer.name} hat gelogen!")
+    println("Er zieht alle Karten.")
+    
+    controller.handleChallengeDecision(true)
   }
 }
 
@@ -155,7 +158,7 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
       case _ => Failure(new Exception("Gebe 'j' oder 'n' ein"))
     }
   }
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
 
@@ -167,7 +170,7 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
       case Human => StdIn.readLine()
       case AI => "n"
     }
-    
+
     if (!handleGlobalCommand(controller, rawInput)) {
       validateInput(rawInput) match {
         case Success(decision) => controller.handleChallengeDecision(decision)
@@ -178,18 +181,26 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
 }
 
 case object ChallengedLieLostScreen extends GameScreen {
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
-    view.challengerLostMessage(currentPlayer, prevPlayer)
+    
+    println(s"${prevPlayer.name} hat die Wahrheit gesagt!")
+    println(s"${currentPlayer.name} zieht alle Karten!")
+    
+    controller.handleChallengeDecision(false)
   }
 }
 
 case object PlayedScreen extends GameScreen {
-  override def renderAndHandleInput(controller: GameController, view: GameView): Unit = {
+  override def renderAndHandleInput(controller: GameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
-    val playedCards = controller.getPlayedCards
     
-    view.printLayedCards(currentPlayer, playedCards)
+    if (currentPlayer.playerType == AI) {
+      Thread.sleep(1000) // Kleine Pause für AI-Züge
+    }
+    
+    controller.model = controller.model.setNextPlayer()
+    controller.notifyObservers()
   }
 }
