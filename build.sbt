@@ -25,3 +25,5 @@ lazy val root = (project in file("."))
     coverageEnabled := true,
     coverageHighlighting := true
   )
+
+//test

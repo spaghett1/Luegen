@@ -41,3 +41,5 @@ object Game extends JFXApp3 {
     controller.initGame()
   }
 }
+
+//test

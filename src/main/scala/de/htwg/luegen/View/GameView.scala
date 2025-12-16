@@ -84,3 +84,5 @@ class GameView(val controller: GameController) extends Observer {
   def printLayedCards(player: Player, cards: List[Card]) = { }
   def startGamePrompt(player: Player) = { }
 }
+
+//test

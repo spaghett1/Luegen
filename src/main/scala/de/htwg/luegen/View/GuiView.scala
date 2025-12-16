@@ -52,3 +52,5 @@ class GuiView(controller: GameController) extends Observer {
     }
   }
 }
+
+//test
