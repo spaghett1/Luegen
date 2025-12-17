@@ -113,3 +113,4 @@ class GameController(private var model: IGameModel) extends IGameController {
   override def getInputError = model.getLastInputError
   override def getLog = model.getLogHistory
 }
+ 

@@ -9,3 +9,4 @@ trait Observable {
 trait Observer {
   def updateDisplay(): Unit
 }
+ 

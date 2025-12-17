@@ -102,4 +102,4 @@ class GameView(controller: IGameController) extends Observer {
     println(s"${prevPlayer.name} hat die Wahrheit gesagt!")
     println(s"${player.name} zieht alle Karten!")
   }
-}
+} 

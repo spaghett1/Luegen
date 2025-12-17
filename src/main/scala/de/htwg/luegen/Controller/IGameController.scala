@@ -5,7 +5,7 @@ import de.htwg.luegen.Model.PlayerType
 import de.htwg.luegen.Model.Card
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.Model.IGameModel
-
+ 
 trait IGameController extends Observable {
   def initGame(): IGameModel
   def handlePlayerCount(count: Int): IGameModel

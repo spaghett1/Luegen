@@ -180,7 +180,7 @@ case class GameModel(
       amountPlayed,
       lastAccusedIndex,
     )
-  }
+  } 
 
   def restoreMemento(memento: Memento): IGameModel = {
     this.copy(

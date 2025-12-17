@@ -33,3 +33,4 @@ trait IGameModel {
   def getPlayedCards: List[Card]
   def isFirstTurn: Boolean
 }
+ 
