@@ -1,45 +1,33 @@
 package luegen
 
 import de.htwg.luegen.Model.GameModel
-import de.htwg.luegen.View.{GameView, GuiView}
+import de.htwg.luegen.View.GameView
 import de.htwg.luegen.Controller.GameController
-import scalafx.application.JFXApp3 // Wichtig für den GUI-Start
+import de.htwg.luegen.Model.IGameModel
+import de.htwg.luegen.Controller.IGameController
+import de.htwg.luegen.View.GuiView
 
-// Der Hauptstartpunkt muss JFXApp3 erweitern
-object Game extends JFXApp3 {
+object Game {
+  @main def init(): Unit = {
+    val model: IGameModel = GameModel()
+    val controller: IGameController = GameController(model)
+    val tui = new GameView(controller)
+    val gui = new GuiView(controller)
 
-  override def start(): Unit = {
-    println("Spiel wird initialisiert...")
-
-    val model = new GameModel()
-    val controller = new GameController(model)
-
-    // --- 1. GUI Setup (JFX Thread) ---
-    val guiView = new GuiView(controller)
-    // Die Stage der JFXApp3 wird konfiguriert
-    stage = new JFXApp3.PrimaryStage {
-      title = "Lügen GUI (ScalaFX)"
-      scene = new scalafx.scene.Scene(800, 600) {
-        root = guiView.root // Zugriff auf das VBox-Root-Element
+    // TUI in den Hintergrund schieben
+    val tuiThread = new Thread(() => {
+      // Warte kurz, bis das GUI-Fenster stabil steht
+      Thread.sleep(1000)
+      while (true) {
+        // Der Controller triggert hier über notifyObservers die GUI mit
+        tui.handleInput()
       }
-    }
-    controller.registerObserver(guiView) // GUI Observer registrieren
+    })
+    tuiThread.setDaemon(true)
+    tuiThread.start()
 
-    // --- 2. TUI Setup (Hintergrund-Thread) ---
-    val tuiView = new GameView(controller)
-    controller.registerObserver(tuiView) // TUI Observer (Monitor) registrieren
-
-    // Anonyme Thread-Klasse (keine neue Datei/Klasse) für den TUI-Input
-    // Startet die blockierende TUI-Logik auf einem separaten Thread
-    new Thread(new Runnable {
-      override def run(): Unit = {
-        tuiView.runTuiLoop()
-      }
-    }).start()
-
-    // Initialisierung des Spiels (löst das erste Update aus)
+    // GUI muss auf Thread 0 laufen
+    gui.main(Array.empty)
     controller.initGame()
   }
 }
-
-//test

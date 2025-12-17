@@ -1,56 +1,68 @@
 package de.htwg.luegen.View
 
-import de.htwg.luegen.Controller.{GameController, Observer}
+import scalafx.application.JFXApp3
 import scalafx.application.Platform
-import scalafx.scene.control.{Label, Button} // NEU: Button importiert
+import scalafx.scene.Scene
+import scalafx.scene.control.{Button, Label}
 import scalafx.scene.layout.VBox
 import scalafx.geometry.Insets
-import scalafx.scene.text.Font
-import scalafx.event.ActionEvent
-import scalafx.Includes.given
+import de.htwg.luegen.Controller.{IGameController, Observer}
+import de.htwg.luegen.TurnState
 
-class GuiView(controller: GameController) extends Observer {
-  
-  val statusLabel = new Label("Initialisiere Spiel...") {
-    font = Font("Arial", 16)
-  }
-  
-  val initButton = new Button("Spiel starten (2 Spieler)") {
-    onAction = (e: ActionEvent) => {
-      controller.handlePlayerCount(2)
+class GuiView(controller: IGameController) extends JFXApp3 with Observer {
+
+  // Variablen für UI-Elemente (noch nicht initialisiert wegen Toolkit-Fehler)
+  private var statusLabel: Label = _
+  private var playerLabel: Label = _
+
+  override def start(): Unit = {
+    // Registrierung als Beobachter erfolgt erst hier im Toolkit-Thread
+    controller.registerObserver(this)
+
+    // Initialisierung der UI-Komponenten [cite: 885, 904]
+    statusLabel = new Label("Warte auf Initialisierung...")
+    playerLabel = new Label("")
+
+    stage = new JFXApp3.PrimaryStage {
+      title = "Lügen - ScalaFX GUI"
+      scene = new Scene {
+        root = new VBox {
+          padding = Insets(20)
+          spacing = 15
+          children = Seq(
+            new Label("Spielstatus:"),
+            statusLabel,
+            playerLabel,
+            new Button("Undo") {
+              // Interaktion über das Controller-Interface [cite: 920, 925]
+              onAction = _ => controller.undo()
+            },
+            new Button("Redo") {
+              onAction = _ => controller.redo()
+            }
+          )
+        }
+      }
     }
   }
-  
-  val root = new VBox {
-    padding = Insets(10)
-    spacing = 10
-    children = Seq(
-      new Label("--- Lügen GUI ---") { font = Font("Arial", 20) },
-      initButton, // Button hinzugefügt
-      statusLabel
-    )
-  }
-  
-  override def updateDisplay(): Unit = {
-    val model = controller.model
-    
-    Platform.runLater {
-      val player = model.players.lift(model.currentPlayerIndex).map(_.name).getOrElse("N/A")
-      val error = model.lastInputError.getOrElse("")
 
-      statusLabel.text =
-        s"Zustand: ${model.turnState}\n" +
-          s"Spieler am Zug: $player\n" +
-          s"Karten: ${model.discardedCards.size} im Pott\n" +
-          s"Fehler: $error"
-      
-      if (model.turnState.toString == "NeedsPlayerCount") {
-        initButton.setDisable(false)
-      } else {
-        initButton.setDisable(true)
+  // Diese Methode wird vom Controller bei jeder Änderung getriggert [cite: 1170]
+  override def updateDisplay(): Unit = {
+    Platform.runLater {
+      try {
+        // Nur auslesen, nicht blockieren
+        val state = controller.getTurnState
+        val players = controller.getCurrentPlayers
+
+        if (statusLabel != null) {
+          statusLabel.text = s"Status: $state"
+        }
+        if (playerLabel != null && players.nonEmpty) {
+          playerLabel.text = s"Spieler bereit: ${players.size}"
+        }
+      } catch {
+        case e: Exception => println(s"GUI Update Fehler: ${e.getMessage}")
       }
     }
   }
 }
-
-//test

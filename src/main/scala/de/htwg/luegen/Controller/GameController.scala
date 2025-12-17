@@ -1,19 +1,10 @@
 package de.htwg.luegen.Controller
 
-import de.htwg.luegen.View.*
-import de.htwg.luegen.Model.*
-import de.htwg.luegen.TurnState.*
-import de.htwg.luegen.Model.Utils.*
+import de.htwg.luegen.Model.IGameModel
 
 import scala.collection.mutable.ListBuffer
-import scala.compiletime.uninitialized
-import scala.annotation.tailrec
-import scala.Option.*
-import scala.util.Try
 
-case class HistoryEntry(model: Memento, command: GameCommand)
-
-class GameController(var model: GameModel) extends Observable {
+class GameController(private var model: IGameModel) extends IGameController {
   private val observers: ListBuffer[Observer] = ListBuffer()
 
   private val undoStack: ListBuffer[HistoryEntry] = ListBuffer()
@@ -25,7 +16,7 @@ class GameController(var model: GameModel) extends Observable {
 
   override def notifyObservers(): Unit = observers.foreach(_.updateDisplay())
 
-  private def executeCommand(command: GameCommand): GameModel = {
+  private def executeCommand(command: GameCommand): IGameModel = {
     val decoratedCommand = LoggingCommandDecorator(command)
     undoStack += HistoryEntry(model.createMemento(), command)
     model = decoratedCommand.execute(model)
@@ -34,7 +25,7 @@ class GameController(var model: GameModel) extends Observable {
     model
   }
 
-  def undo(): GameModel = {
+  override def undo(): IGameModel = {
     undoStack.lastOption match {
       case Some(HistoryEntry(memento, command)) =>
         redoStack += HistoryEntry(model.createMemento(), command)
@@ -52,7 +43,7 @@ class GameController(var model: GameModel) extends Observable {
     }
   }
 
-  def redo(): GameModel = {
+  override def redo(): IGameModel = {
     redoStack.lastOption match {
       case Some(HistoryEntry(memento, command)) =>
         undoStack += HistoryEntry(model.createMemento(), command)
@@ -69,54 +60,56 @@ class GameController(var model: GameModel) extends Observable {
     }
   }
   
-  def initGame(): GameModel = {
+  override def initGame(): IGameModel = {
     notifyObservers()
     model
   }
 
-  def handlePlayerCount(count: Int): GameModel = {
+  override def handlePlayerCount(count: Int): IGameModel = {
     executeCommand(SetupPlayerCountCommand(count))
   }
 
-  def handlePlayerNames(names: List[String]): GameModel = {
+  override def handlePlayerNames(names: List[String]): IGameModel = {
     executeCommand(SetupPlayersCommand(names))
   }
 
-  def handleRoundRank(rank: String): GameModel = {
+  override def handleRoundRank(rank: String): IGameModel = {
     executeCommand(HandleRoundRankCommand(rank))
   }
 
-  def handleCardInput(selection: List[Int]): GameModel = {
+  override def handleCardInput(selection: List[Int]): IGameModel = {
     executeCommand(HandleCardPlayCommand(selection))
   }
 
-  def handleChallengeDecision(decision: Boolean): GameModel = {
+  override def handleChallengeDecision(decision: Boolean): IGameModel = {
     executeCommand(HandleChallengeDecisionCommand(decision))
   }
+  
+  override def setNextPlayer(): IGameModel = {
+    executeCommand(SetNextPlayerCommand())
+  }
 
-  def handleError(e: Throwable): GameModel = {
+  override def handleError(e: Throwable): IGameModel = {
     val msg = e match {
       case _: NumberFormatException => "Ungueltige Eingabe! Bitte geben sie Zahlen ein!"
       case _ => e.getMessage
     }
-    model = model.copy(
-      lastInputError = Some(msg)
-    )
+    model = model.setError(msg)
     notifyObservers()
     model
   }
 
-  def getPlayerCount = model.playerCount
-  def getCurrentPlayers = model.players
-  def getDiscardedCount = model.discardedCards.length
-  def getCurrentPlayer = model.players(model.currentPlayerIndex)
-  def getCurrentPlayerType = model.players(model.currentPlayerIndex).playerType
-  def getPrevPlayer = model.getPrevPlayer()
-  def isValidRanks = model.validRanks
-  def isFirstTurn = model.isFirstTurn
-  def getRoundRank = model.roundRank
-  def getTurnState = model.turnState
-  def getPlayedCards = model.lastPlayedCards
-  def getInputError = model.lastInputError
-  def getLog = model.logHistory
+  override def getPlayerCount = model.getPlayerCount
+  override def getCurrentPlayers = model.getPlayers
+  override def getDiscardedCount = model.getDiscardedCards.length
+  override def getCurrentPlayer = model.getPlayers(model.getCurrentPlayerIndex)
+  override def getCurrentPlayerType = model.getPlayers(model.getCurrentPlayerIndex).playerType
+  override def getPrevPlayer = model.getPrevPlayer
+  override def getIsFirstTurn = model.isFirstTurn
+  override def isValidRanks = model.getValidRanks
+  override def getRoundRank = model.getRoundRank
+  override def getTurnState = model.getTurnState
+  override def getPlayedCards = model.getPlayedCards
+  override def getInputError = model.getLastInputError
+  override def getLog = model.getLogHistory
 }

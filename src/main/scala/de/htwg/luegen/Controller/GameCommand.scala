@@ -1,13 +1,13 @@
 package de.htwg.luegen.Controller
 
-import de.htwg.luegen.Model.GameModel
+import de.htwg.luegen.Model.IGameModel
 
 trait GameCommand {
-  def execute(model: GameModel): GameModel
+  def execute(model: IGameModel): IGameModel
 }
 
 case class LoggingCommandDecorator(wrappedCommand: GameCommand) extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
+  override def execute(model: IGameModel): IGameModel = {
     val logEntry = s"Command ausgefuehrt: ${wrappedCommand.getClass.getSimpleName}"
     val modelAfterExecution = wrappedCommand.execute(model)
     modelAfterExecution.addLog(logEntry)
@@ -15,17 +15,17 @@ case class LoggingCommandDecorator(wrappedCommand: GameCommand) extends GameComm
 }
 
 case object InitCommand extends GameCommand {
-  override def execute(model: GameModel): GameModel = model
+  override def execute(model: IGameModel): IGameModel = model
 }
 
 case class SetupPlayerCountCommand(numPlayers: Int) extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
+  override def execute(model: IGameModel): IGameModel = {
     model.setPlayerCount(numPlayers).clearError()
   }
 }
 
 case class SetupPlayersCommand(names: List[String]) extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
+  override def execute(model: IGameModel): IGameModel = {
     val modelPlayerSetup = model.setupPlayers(names)
     val modelTurnOrderSetup = modelPlayerSetup.setupTurnOrder()
     modelTurnOrderSetup.dealCards().clearError()
@@ -33,22 +33,26 @@ case class SetupPlayersCommand(names: List[String]) extends GameCommand {
 }
 
 case class HandleRoundRankCommand(rank: String, prevRank: String = "") extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
+  override def execute(model: IGameModel): IGameModel = {
     model.setupRank(rank).clearError()
   }
 }
 
 case class HandleCardPlayCommand(cardIndices: List[Int]) extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
-    val modelAfterPlay = model.playCards(cardIndices)
-    modelAfterPlay.setNextPlayer().clearError()
+  override def execute(model: IGameModel): IGameModel = {
+    model.playCards(cardIndices)
   }
 }
 
 case class HandleChallengeDecisionCommand(callsLie: Boolean) extends GameCommand {
-  override def execute(model: GameModel): GameModel = {
+  override def execute(model: IGameModel): IGameModel = {
     model.playerTurn(callsLie).clearError()
+  }
+}
 
+case class SetNextPlayerCommand() extends GameCommand {
+  override def execute(model: IGameModel): IGameModel = {
+    model.setNextPlayer()
   }
 }
 

@@ -22,18 +22,18 @@ case class GameModel(
   lastAccusedIndex: Int = 0,
   lastInputError: Option[String] = None,
   logHistory: List[String] = Nil
-) {
+) extends IGameModel {
 
-  def setPlayerCount(num: Int) = this.copy(playerCount = num, turnState = NeedsPlayerNames)
+  override def setPlayerCount(num: Int): IGameModel = this.copy(playerCount = num, turnState = NeedsPlayerNames)
 
-  def setupPlayers(list: List[String]): GameModel =  {
+  override def setupPlayers(list: List[String]): IGameModel =  {
     this.copy(
       players = list.map(p => Player(name = p, playerType = Human)),
       turnState = NeedsRankInput
     )
   }
 
-  def dealCards(): GameModel = {
+  override def dealCards(): IGameModel = {
     val deck = DeckUtils.shuffle(DeckUtils.createDeck())
 
     val updatedPlayers = deck.zipWithIndex.foldLeft(players) { case (accPlayers, (card, i)) =>
@@ -46,7 +46,7 @@ case class GameModel(
     this.copy(players = updatedPlayers)
   }
 
-  def setupTurnOrder() = {
+  override def setupTurnOrder(): IGameModel = {
     val validOrder = TurnOrderUtils.mapOrderToPlayerCount(players)
     val startIndex = Random.nextInt(validOrder.size)
     val newPlayOrder = TurnOrderUtils.getOrderWithStartIndex(validOrder, startIndex)
@@ -56,16 +56,16 @@ case class GameModel(
     )
   }
 
-  def setupRank(rank: String): GameModel = {
+  override def setupRank(rank: String): IGameModel = {
     this.copy(
       roundRank = rank,
       turnState = NeedsCardInput
     )
   }
 
-  def isFirstTurn: Boolean = roundRank == ""
+  override def isFirstTurn: Boolean = roundRank == ""
 
-  def playCards(selIndices: List[Int]): GameModel = {
+  override def playCards(selIndices: List[Int]): IGameModel = {
     val player = players(currentPlayerIndex)
     val selection = selIndices.map(p => player.hand(p - 1))
     val (updatedPlayer, removedCards) = player.removeCards(selection)
@@ -79,7 +79,7 @@ case class GameModel(
     )
   }
 
-  def playerTurn(callsLie: Boolean): GameModel = {
+  override def playerTurn(callsLie: Boolean): IGameModel = {
     if (callsLie) {
       evaluateReveal()
     } else {
@@ -87,15 +87,15 @@ case class GameModel(
     }
   }
 
-  def getPrevPlayer(): Player = {
+  override def getPrevPlayer: Player = {
     val orderSize = playOrder.size
     val pIndexInOrder = (currentPlayerIndex - 1 + orderSize) % orderSize
     val pIndexInModel = playOrder(pIndexInOrder)
     players(pIndexInModel)
   }
 
-  def evaluateReveal(): GameModel = {
-    val prevPlayer = getPrevPlayer()
+  private def evaluateReveal(): GameModel = {
+    val prevPlayer = getPrevPlayer
     val player = players(currentPlayerIndex)
     val lied = lastPlayedCards.exists(_.rank != roundRank)
 
@@ -115,7 +115,7 @@ case class GameModel(
     )
   }
 
-  def drawAll(player: Player): GameModel = {
+  private def drawAll(player: Player): GameModel = {
     val playerIndex = players.indexOf(player)
     val updated = player.addCards(discardedCards)
     val updatedPlayers = players.updated(playerIndex, updated)
@@ -125,7 +125,7 @@ case class GameModel(
     )
   }
 
-  def setNextPlayer(): GameModel = {
+  override def setNextPlayer(): IGameModel = {
     val lastState = turnState
     val orderSize = playOrder.size
     val currentIndexInOrder = playOrder.indexOf(currentPlayerIndex)
@@ -147,10 +147,24 @@ case class GameModel(
     )
   }
 
-  def addLog(entry: String): GameModel = this.copy(logHistory = logHistory :+ entry)
+  override def addLog(entry: String): IGameModel = this.copy(logHistory = logHistory :+ entry)
 
-  def clearError(): GameModel = this.copy(lastInputError = None)
+  override def setError(error: String): IGameModel = {
+    this.copy(lastInputError = Some(error))
+  }
+  override def clearError(): IGameModel = this.copy(lastInputError = None)
 
+  override def getPlayerCount: Int = this.playerCount
+  override def getTurnState: TurnState = this.turnState
+  def getPlayers: List[Player] = this.players
+  def getCurrentPlayerIndex: Int = this.currentPlayerIndex
+  def getRoundRank: String = this.roundRank
+  def getLastInputError: Option[String] = this.lastInputError
+  def getLogHistory: List[String] = this.logHistory
+  def getDiscardedCards: List[Card] = this.discardedCards
+  def getValidRanks: List[String] = this.validRanks
+  def getPlayedCards: List[Card] = this.lastPlayedCards
+  
   def createMemento(): Memento = {
     Memento(
       discardedCards,
@@ -168,7 +182,7 @@ case class GameModel(
     )
   }
 
-  def restoreMemento(memento: Memento): GameModel = {
+  def restoreMemento(memento: Memento): IGameModel = {
     this.copy(
       discardedCards = memento.discardedCards,
       roundRank = memento.roundRank,
