@@ -9,6 +9,10 @@ import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.Controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.Model.Player
+import scalafx.scene.shape.Rectangle
+import scalafx.scene.layout.{StackPane, Pane}
+import scalafx.scene.paint.Color
+import scalafx.collections.ObservableBuffer
 
 class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
@@ -167,66 +171,126 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
   }
 
+  private val selectedIndices = ObservableBuffer[Int]()
+
   private def updateGameBoard(state: TurnState, player: Player): Unit = {
     if (gameBoard == null) return
     gameBoard.children.clear()
 
+    val tableLayout = createTableLayout()
+    gameBoard.children.add(tableLayout)
+
+    val actionArea = new VBox {
+      spacing = 10
+      alignment = Pos.Center
+      padding = Insets(10)
+    }
+
     state match {
       case TurnState.NeedsRankInput =>
-        val instructionLabel = new Label("Wähle einen Rang für die Runde:") {
-          style = "-fx-font-weight: bold; -fx-padding: 10;"
-        }
-        
-        val rankButtons = new HBox(5) {
-          alignment = Pos.Center
-          children = controller.isValidRanks.map { r =>
-            new Button(r) {
-              prefWidth = 40
-              onAction = _ => controller.handleRoundRank(r)
+        actionArea.children.addAll(
+          new Label("Wähle einen Rang für die Runde:"),
+          new HBox(5) {
+            alignment = Pos.Center
+            children = controller.isValidRanks.map { r =>
+              new Button(r) {
+                onAction = _ => controller.handleRoundRank(r)
+              }
             }
           }
-        }
-        gameBoard.children.addAll(instructionLabel, rankButtons)
-        
+        )
+
       case TurnState.NeedsCardInput =>
-        val cardsLabel = new Label(s"Deine Karten (${player.cardCount}):")
-        val cardsHBox = new HBox(5) {
-          alignment = Pos.Center
-          children = player.hand.zipWithIndex.map { case (card, idx) =>
-            new Button(card.toString) {
-              style = "-fx-background-color: white; -fx-border-color: black; -fx-min-width: 50;"
-              onAction = _ => controller.handleCardInput(List(idx + 1))
+        actionArea.children.addAll(
+          new Label(s"Deine Karten (${player.cardCount}):"),
+          new HBox(5) {
+            alignment = Pos.Center
+            children = player.hand.zipWithIndex.map { case (card, idx) =>
+              new Button(card.toString) {
+                style = "-fx-background-color: white; -fx-border-color: black;"
+                onAction = _ => controller.handleCardInput(List(idx + 1))
+              }
             }
           }
-        }
-        gameBoard.children.addAll(cardsLabel, cardsHBox)
-        
+        )
+
       case TurnState.NeedsChallengeDecision =>
         val prevPlayer = controller.getPrevPlayer
-        val challengeLabel = new Label(s"Hat ${prevPlayer.name} gelogen?")
-        val decisionBox = new HBox(15) {
-          alignment = Pos.Center
-          children = Seq(
-            new Button("Ja, aufdecken!") {
-              style = "-fx-base: #e74c3c;"
-              onAction = _ => controller.handleChallengeDecision(true)
-            },
-            new Button("Nein, weiter") {
-              onAction = _ => controller.handleChallengeDecision(false)
-            }
-          )
-        }
-        gameBoard.children.addAll(challengeLabel, decisionBox)
-        
+        actionArea.children.addAll(
+          new Label(s"Hat ${prevPlayer.name} gelogen?"),
+          new HBox(15) {
+            alignment = Pos.Center
+            children = Seq(
+              new Button("Ja, aufdecken!") {
+                style = "-fx-base: #e74c3c;"; onAction = _ => controller.handleChallengeDecision(true)
+              },
+              new Button("Nein, weiter") {
+                onAction = _ => controller.handleChallengeDecision(false)
+              }
+            )
+          }
+        )
+
       case TurnState.Played | TurnState.ChallengedLieWon | TurnState.ChallengedLieLost =>
-        val nextBtn = new Button("Nächster Spieler") {
-          prefWidth = 150
+        actionArea.children.add(new Button("Nächster Spieler") {
           onAction = _ => controller.setNextPlayer()
-        }
-        gameBoard.children.add(nextBtn)
+        })
 
       case _ =>
-        gameBoard.children.add(new Label("Warte auf Eingabe..."))
     }
+
+    gameBoard.children.add(actionArea)
   }
+
+  private def createTableLayout(): Pane = {
+    val pane = new Pane {
+      prefWidth = 400
+      prefHeight = 300
+    }
+
+    val table = new Rectangle {
+      width = 250
+      height = 150
+      fill = Color.DarkGreen
+      stroke = Color.SaddleBrown
+      strokeWidth = 5
+      arcWidth = 20
+      arcHeight = 20
+      layoutX = 75
+      layoutY = 75
+    }
+
+    val discardedCount = controller.getDiscardedCount
+    val stackLabel = new Label(s"Deck: $discardedCount") {
+      style = "-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"
+      layoutX = 150
+      layoutY = 135
+    }
+
+    pane.children.addAll(table, stackLabel)
+    val players = controller.getCurrentPlayers
+    val centerX = 200.0
+    val centerY = 150.0
+    val radiusX = 160.0
+    val radiusY = 120.0
+
+    players.zipWithIndex.foreach { case (p, i) =>
+      val angle = 2 * math.Pi * i / players.size
+      val px = centerX + radiusX * math.cos(angle) - 30
+      val py = centerY + radiusY * math.sin(angle)
+
+      val pLabel = new Label(s"${p.name} (${p.cardCount})") {
+        style = if (p == controller.getCurrentPlayer)
+          "-fx-background-color: yellow; -fx-padding: 2; -fx-font-weight: bold;"
+        else "-fx-background-color: #ecf0f1; -fx-padding: 2;"
+        layoutX = px
+        layoutY = py
+      }
+      pane.children.add(pLabel)
+    }
+
+    pane
+  }
+
+
 }
