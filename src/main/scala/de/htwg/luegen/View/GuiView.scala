@@ -26,8 +26,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
-      width = 900
-      height = 700
+      width = 1200
+      height = 800
       scene = new Scene {
         mainLayout = new VBox {
           padding = Insets(20)
@@ -42,7 +42,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
   private def createMenuLayout(): Seq[scalafx.scene.Node] = {
     val titleLabel = new Label("Willkommen bei Lügen") {
-      style = "-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"
+      style = "-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: black;"
     }
 
     val startButton = new Button("Neues Spiel") {
@@ -56,7 +56,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       onAction = _ => System.exit(0)
     }
 
-    Seq(titleLabel, new Separator(), startButton, exitButton)
+    Seq(titleLabel, startButton, exitButton)
   }
   
   private def showConfigLayout(): Unit = {
@@ -176,9 +176,12 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
   private def updateGameBoard(state: TurnState, player: Player): Unit = {
     if (gameBoard == null) return
     gameBoard.children.clear()
-
-    val tableLayout = createTableLayout()
-    gameBoard.children.add(tableLayout)
+    
+    val centeredTable = new StackPane {
+      children = createTableLayout()
+      alignment = Pos.Center
+    }
+    gameBoard.children.add(centeredTable)
 
     val actionArea = new VBox {
       spacing = 10
@@ -188,6 +191,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
     state match {
       case TurnState.NeedsRankInput =>
+        selectedIndices.clear()
         actionArea.children.addAll(
           new Label("Wähle einen Rang für die Runde:"),
           new HBox(5) {
@@ -201,18 +205,39 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
         )
 
       case TurnState.NeedsCardInput =>
-        actionArea.children.addAll(
-          new Label(s"Deine Karten (${player.cardCount}):"),
-          new HBox(5) {
-            alignment = Pos.Center
-            children = player.hand.zipWithIndex.map { case (card, idx) =>
-              new Button(card.toString) {
-                style = "-fx-background-color: white; -fx-border-color: black;"
-                onAction = _ => controller.handleCardInput(List(idx + 1))
+        actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})"))
+
+        val cardsHBox = new HBox(5) {
+          alignment = Pos.Center
+          children = player.hand.zipWithIndex.map { case (card, idx) =>
+            val cardIdx = idx + 1
+            new Button(card.toString) {
+              style = if (selectedIndices.contains(cardIdx))
+                "-fx-background-color: lightblue; -fx-border-color: blue;"
+              else "-fx-background-color: white; -fx-border-color: black;"
+
+              onAction = _ => {
+                if (selectedIndices.contains(cardIdx)) {
+                  selectedIndices -= cardIdx
+                } else if (selectedIndices.size < 3) {
+                  selectedIndices += cardIdx
+                }
+                updateDisplay()
               }
             }
           }
-        )
+        }
+
+        val playBtn = new Button("Karten legen") {
+          // Deaktiviert, wenn keine Karte gewählt wurde
+          disable = selectedIndices.isEmpty
+          style = "-fx-background-color: seagreen; -fx-text-fill: white; -fx-font-weight: bold;"
+          onAction = _ => {
+            controller.handleCardInput(selectedIndices.toList)
+            selectedIndices.clear()
+          }
+        }
+        actionArea.children.addAll(cardsHBox, playBtn)
 
       case TurnState.NeedsChallengeDecision =>
         val prevPlayer = controller.getPrevPlayer
@@ -222,7 +247,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
             alignment = Pos.Center
             children = Seq(
               new Button("Ja, aufdecken!") {
-                style = "-fx-base: #e74c3c;"; onAction = _ => controller.handleChallengeDecision(true)
+                style = "-fx-base: crimson;";
+                onAction = _ => controller.handleChallengeDecision(true)
               },
               new Button("Nein, weiter") {
                 onAction = _ => controller.handleChallengeDecision(false)
@@ -230,6 +256,26 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
             )
           }
         )
+
+      case TurnState.ChallengedLieWon =>
+        val prevPlayer = controller.getPrevPlayer
+        val resultLabel = new Label(s"${prevPlayer.name} hat GELOGEN!") {
+          style = "-fx-text-fill: crimson; -fx-font-size: 18px; -fx-font-weight: bold;"
+        }
+        val nextBtn = new Button("Nächster Spieler") {
+          onAction = _ => controller.setNextPlayer()
+        }
+        actionArea.children.addAll(resultLabel, nextBtn)
+
+      case TurnState.ChallengedLieLost =>
+        val prevPlayer = controller.getPrevPlayer
+        val resultLabel = new Label(s"${prevPlayer.name} hat die WAHRHEIT gesagt!") {
+          style = "-fx-text-fill: seagreen; -fx-font-size: 18px; -fx-font-weight: bold;"
+        }
+        val nextBtn = new Button("Nächster Spieler") {
+          onAction = _ => controller.setNextPlayer()
+        }
+        actionArea.children.addAll(resultLabel, nextBtn)
 
       case TurnState.Played | TurnState.ChallengedLieWon | TurnState.ChallengedLieLost =>
         actionArea.children.add(new Button("Nächster Spieler") {
@@ -246,6 +292,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     val pane = new Pane {
       prefWidth = 400
       prefHeight = 300
+      maxWidth = 400
+      maxHeight = 300
     }
 
     val table = new Rectangle {
@@ -283,7 +331,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       val pLabel = new Label(s"${p.name} (${p.cardCount})") {
         style = if (p == controller.getCurrentPlayer)
           "-fx-background-color: yellow; -fx-padding: 2; -fx-font-weight: bold;"
-        else "-fx-background-color: #ecf0f1; -fx-padding: 2;"
+        else "-fx-background-color: whitesmoke; -fx-padding: 2;"
         layoutX = px
         layoutY = py
       }
