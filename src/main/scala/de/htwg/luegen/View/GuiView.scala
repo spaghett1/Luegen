@@ -261,7 +261,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val discardedCount = controller.getDiscardedCount
-    val stackLabel = new Label(s"Deck: $discardedCount") {
+    val displayRank = controller.getRoundRank
+    val stackLabel = new Label(s"Deck: $discardedCount Rang: $displayRank") {
       style = "-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"
       layoutX = 150
       layoutY = 135
@@ -288,7 +289,6 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       }
       pane.children.add(pLabel)
     }
-
     pane
   }
 
