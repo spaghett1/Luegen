@@ -1,4 +1,4 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen.controller
 
 
 trait Observable {

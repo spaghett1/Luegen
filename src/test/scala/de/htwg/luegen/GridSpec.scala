@@ -1,8 +1,8 @@
 
 package de.htwg.luegen
 
-import de.htwg.luegen.Model.Player
-import de.htwg.luegen.View.Grid
+import de.htwg.luegen.model.impl1.Player
+import de.htwg.luegen.view.Grid
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

@@ -1,6 +1,7 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen.controller.impl1
 
-import de.htwg.luegen.Model.IGameModel
+import de.htwg.luegen.controller.*
+import de.htwg.luegen.model.IGameModel
 
 import scala.collection.mutable.ListBuffer
 

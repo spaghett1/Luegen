@@ -1,6 +1,6 @@
-package de.htwg.luegen.View
+package de.htwg.luegen.view
 
-import de.htwg.luegen.Model.Player
+import de.htwg.luegen.model.impl1.Player
 
 case class Grid(
   text: Array[String] = Array.fill(11)(""),

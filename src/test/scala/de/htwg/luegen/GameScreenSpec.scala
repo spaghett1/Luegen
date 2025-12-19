@@ -1,9 +1,10 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.Controller.GameController
-import de.htwg.luegen.Model.{AI, Card, GameModel, Human, Player, PlayerType, *}
+import de.htwg.luegen.controller.impl1.GameController
+import de.htwg.luegen.model.*
+import de.htwg.luegen.model.impl1.{AI, Card, GameModel, Player, PlayerType}
 import de.htwg.luegen.TurnState.*
-import de.htwg.luegen.View.{GameScreen, GameView, NeedsCardInputScreen, NeedsChallengeDecisionScreen, NeedsPlayerCountScreen, NeedsPlayerNamesScreen, NeedsRankInputScreen}
+import de.htwg.luegen.view.{GameScreen, GameView, NeedsCardInputScreen, NeedsChallengeDecisionScreen, NeedsPlayerCountScreen, NeedsPlayerNamesScreen, NeedsRankInputScreen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

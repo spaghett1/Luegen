@@ -1,7 +1,8 @@
-package de.htwg.luegen.Model
+package de.htwg.luegen.model
 
 import de.htwg.luegen.TurnState
-import de.htwg.luegen.Model.Utils.Memento
+import de.htwg.luegen.model.impl1.{Card, Player}
+import de.htwg.luegen.model.impl1.Utils.Memento
 
 trait IGameModel {
   def playCards(selIndices: List[Int]): IGameModel

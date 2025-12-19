@@ -1,7 +1,7 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.Model.Player
-import de.htwg.luegen.Model.Utils.TurnOrderUtils
+import de.htwg.luegen.model.impl1.Player
+import de.htwg.luegen.model.impl1.Utils.TurnOrderUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

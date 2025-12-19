@@ -1,14 +1,14 @@
-package de.htwg.luegen.View
+package de.htwg.luegen.view
 
+import de.htwg.luegen.model.impl1.Player
 import scalafx.application.JFXApp3
 import scalafx.application.Platform
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, Separator, Slider, TextField}
 import scalafx.scene.layout.{VBox, HBox, Priority}
 import scalafx.geometry.{Insets, Pos}
-import de.htwg.luegen.Controller.{IGameController, Observer}
+import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
-import de.htwg.luegen.Model.Player
 import scalafx.scene.shape.Rectangle
 import scalafx.scene.layout.{StackPane, Pane}
 import scalafx.scene.paint.Color

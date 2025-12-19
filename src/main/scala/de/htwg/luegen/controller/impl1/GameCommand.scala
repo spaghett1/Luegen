@@ -1,6 +1,6 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen.controller.impl1
 
-import de.htwg.luegen.Model.IGameModel
+import de.htwg.luegen.model.IGameModel
 
 trait GameCommand {
   def execute(model: IGameModel): IGameModel

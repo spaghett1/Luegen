@@ -1,14 +1,15 @@
-package de.htwg.luegen.View
+package de.htwg.luegen.view
 
-import de.htwg.luegen.Controller.Observer
-import de.htwg.luegen.Controller.IGameController
-import de.htwg.luegen.Model.*
+import de.htwg.luegen.controller.Observer
+import de.htwg.luegen.controller.IGameController
+import de.htwg.luegen.model.*
+import de.htwg.luegen.model.impl1.{Card, Player}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
 
 import scala.util.Try
 import scala.io.StdIn
-import de.htwg.luegen.View.*
+import de.htwg.luegen.view.*
 
 class GameView(controller: IGameController) extends Observer {
   private var grid = new Grid

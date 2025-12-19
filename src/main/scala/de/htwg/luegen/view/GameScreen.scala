@@ -1,7 +1,8 @@
-package de.htwg.luegen.View
-import de.htwg.luegen.Controller.IGameController
-import de.htwg.luegen.Model.{AI, Human, Player}
-import de.htwg.luegen.View.GameView
+package de.htwg.luegen.view
+
+import de.htwg.luegen.model.impl1.{AI, Human, Player}
+import de.htwg.luegen.controller.IGameController
+import de.htwg.luegen.view.GameView
 
 import scala.io.StdIn
 import scala.util.Try

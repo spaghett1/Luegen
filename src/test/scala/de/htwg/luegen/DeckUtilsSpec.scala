@@ -1,6 +1,6 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.Model.Utils.DeckUtils
+import de.htwg.luegen.model.impl1.Utils.DeckUtils
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

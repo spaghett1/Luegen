@@ -1,11 +1,9 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen.controller
 
-import de.htwg.luegen.Model.Player
-import de.htwg.luegen.Model.PlayerType
-import de.htwg.luegen.Model.Card
 import de.htwg.luegen.TurnState
-import de.htwg.luegen.Model.IGameModel
- 
+import de.htwg.luegen.model.IGameModel
+import de.htwg.luegen.model.impl1.{Card, Player, PlayerType}
+
 trait IGameController extends Observable {
   def initGame(): IGameModel
   def handlePlayerCount(count: Int): IGameModel

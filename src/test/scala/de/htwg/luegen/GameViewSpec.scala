@@ -1,15 +1,15 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.Controller.GameController
-import de.htwg.luegen.Model.{Card, GameModel, Human, Player, PlayerType}
-import de.htwg.luegen.View.GameView
+import de.htwg.luegen.model.impl1.{Card, GameModel, Human, Player, PlayerType}
+import de.htwg.luegen.view.GameView
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, PrintStream}
 import scala.Console.{withIn, withOut}
 import scala.util.Try
-import de.htwg.luegen.Controller.Observer // Import hinzufügen
+import de.htwg.luegen.controller.Observer
+import de.htwg.luegen.controller.impl1.GameController // Import hinzufügen
 
 /**
  * Dummy GameController: Erforderlich, um eine GameView zu instanziieren und 

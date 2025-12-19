@@ -1,11 +1,12 @@
-package de.htwg.luegen.Model
+package de.htwg.luegen.model.impl1
+
+import de.htwg.luegen.model.impl1.Utils.{DeckUtils, Memento, TurnOrderUtils}
+import de.htwg.luegen.model.IGameModel
+import de.htwg.luegen.TurnState
+import de.htwg.luegen.TurnState.*
 
 import scala.collection.mutable
 import scala.util.Random
-import de.htwg.luegen.Model.Player
-import de.htwg.luegen.Model.Utils.*
-import de.htwg.luegen.TurnState
-import de.htwg.luegen.TurnState.*
 
 case class GameModel(
   discardedCards: List[Card] = Nil,

@@ -1,11 +1,13 @@
-package de.htwg.luegen.Model
+package de.htwg.luegen.model.impl1
+
+import de.htwg.luegen.model.impl1.Card
 
 trait PlayerType
 case object Human extends PlayerType
 case object AI extends PlayerType
 
 case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human) {
-  import Card.*
+  import de.htwg.luegen.model.impl1.Card.*
   
   def addCards(cards: List[Card]): Player = {
     this.copy(hand = hand ++ cards)

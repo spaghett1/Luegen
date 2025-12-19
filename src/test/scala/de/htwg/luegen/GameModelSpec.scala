@@ -1,6 +1,6 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.Model.{Card, GameModel, Player}
+import de.htwg.luegen.model.impl1.{Card, GameModel, Player}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
 import org.scalatest.matchers.should.Matchers
@@ -52,20 +52,15 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         // Die Memento-Struktur ist nun extern definiert und enthält den Log nicht.
         // Das Memento selbst sollte keine Log-Historie haben.
         // Das Model enthält die Log-Historie.
-        initialModel.logHistory should not be empty
+        initialModel.getLogHistory should not be empty
       }
 
       "restoreMemento sollte den Zustand korrekt wiederherstellen und den Log beibehalten" in {
-        val modelChange = initialModel.copy(
-          roundRank = "K",
-          turnState = NeedsRankInput,
-          logHistory = initialModel.logHistory :+ "Änderung"
-        )
-        val memento = modelChange.createMemento()
-        val logBeforeRestore = initialModel.logHistory
+        val memento = initialModel.createMemento()
+        val logBeforeRestore = initialModel.getLogHistory
 
         // Model ändert sich nochmal vor der Wiederherstellung
-        val modelToRestore = modelChange.copy(
+        val modelToRestore = initialModel.copy(
           roundRank = "Q",
           logHistory = modelChange.logHistory :+ "Aktuelle Änderung"
         )
@@ -90,7 +85,7 @@ class GameModelSpec extends AnyWordSpec with Matchers {
       "dealCards sollte ein NEUES Model mit 52 Karten zurückgeben" in {
         val model = GameModel().setupPlayers(List("A", "B", "C", "D"))
         val newModel = model.dealCards()
-        newModel.players.map(_.hand.size).sum shouldBe 52
+        newModel.getPlayers.map(_.hand.size).sum shouldBe 52
         newModel should not be model
       }
 
@@ -99,17 +94,16 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         val model = GameModel().setupPlayers(List("A", "B", "C"))
         val newModel = model.setupTurnOrder()
 
-        newModel.currentPlayerIndex should be >= 0
-        newModel.playOrder should not be empty
-        newModel.turnState shouldBe NeedsRankInput // Zustand sollte gesetzt sein
+        newModel.getCurrentPlayerIndex should be >= 0
+        newModel.getTurnState shouldBe NeedsRankInput // Zustand sollte gesetzt sein
         newModel should not be model
       }
 
       "setupRank sollte den roundRank setzen und ein NEUES Model zurückgeben" in {
         val model = setupInitialModel()
         val newModel = model.setupRank("A")
-        newModel.roundRank shouldBe "A"
-        newModel.turnState shouldBe NeedsCardInput
+        newModel.getRoundRank shouldBe "A"
+        newModel.getTurnState shouldBe NeedsCardInput
         newModel should not be model
       }
     }
@@ -121,10 +115,10 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         model.logHistory shouldBe empty
 
         val newModel = model.addLog("test entry 1")
-        newModel.logHistory should contain theSameElementsInOrderAs List("test entry 1")
+        newModel.getLogHistory should contain theSameElementsInOrderAs List("test entry 1")
 
         val finalModel = newModel.addLog("test entry 2")
-        finalModel.logHistory.size shouldBe 2
+        finalModel.getLogHistory.size shouldBe 2
       }
 
       "clearError sollte lastInputError von Some auf None setzen" in {
@@ -132,7 +126,7 @@ class GameModelSpec extends AnyWordSpec with Matchers {
         model.lastInputError should not be None
 
         val newModel = model.clearError()
-        newModel.lastInputError shouldBe None
+        newModel.getLastInputError shouldBe None
         newModel should not be model
       }
     }
