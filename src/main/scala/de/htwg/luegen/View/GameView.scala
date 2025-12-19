@@ -1,7 +1,7 @@
 package de.htwg.luegen.View
 
 import de.htwg.luegen.Controller.Observer
-import de.htwg.luegen.Controller.GameController
+import de.htwg.luegen.Controller.IGameController
 import de.htwg.luegen.Model.*
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
@@ -10,7 +10,7 @@ import scala.util.Try
 import scala.io.StdIn
 import de.htwg.luegen.View.*
 
-class GameView(controller: GameController) extends Observer {
+class GameView(controller: IGameController) extends Observer {
   private var grid = new Grid
   
   controller.registerObserver(this)
@@ -47,12 +47,16 @@ class GameView(controller: GameController) extends Observer {
       displayPlayerHand(player)
       println(s"Aktueller Rang: ${if (roundRank.isEmpty) "Keiner" else roundRank }")
     }
+    
+    stateToScreen.get(state).foreach(_.display(controller))
+  }
 
-    stateToScreen.get(state) match {
-      case Some(screen) =>
-        screen.renderAndHandleInput(controller, this)
-      case None =>
-        println("Ungueltiger Zustand!")
+  def handleInput(): Unit = {
+    val state = controller.getTurnState
+    val input = StdIn.readLine()
+    if (input != null) {
+      val state = controller.getTurnState
+      stateToScreen.get(state).foreach(_.processInput(input, controller))
     }
   }
   

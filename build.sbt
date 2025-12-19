@@ -1,24 +1,34 @@
+// 1. Logik zur Bestimmung des Betriebssystems (muss AUSSERHALB von .settings stehen)
+val osName = System.getProperty("os.name").toLowerCase
+val javafxClassifier = osName match {
+  case n if n.contains("win") => "win"
+  case n if n.contains("mac") =>
+    if (System.getProperty("os.arch") == "aarch64") "mac-aarch64" else "mac"
+  case n if n.contains("nux") => "linux"
+  case _ => "win" // Fallback
+}
+
 lazy val root = (project in file("."))
   .settings(
-    name := "de/htwg/luegen",
+    name := "de-htwg-luegen",
     version := "0.1.0-SNAPSHOT",
-    scalaVersion := "3.7.3",
+
+    // Empfehlung: Nutze 3.3.3 (LTS), da 3.7.x noch experimentell ist
+    scalaVersion := "3.3.3",
 
     libraryDependencies ++= Seq(
-      // ... Ihre anderen Produktions-Abhängigkeiten ...
-
-      // 1. ScalaTest (für die WordSpec-Struktur)
+      // Nutze zusammenpassende Versionen für Scala 3
+      "org.scalafx" %% "scalafx" % "20.0.0-R31",
       "org.scalatest" %% "scalatest" % "3.2.19" % "test",
-
-      // 2. Mockito (Integration für ScalaTest)
-      // Das % Test stellt sicher, dass diese Abhängigkeiten NUR für Tests verwendet werden.
-      "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
+      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test
     ),
 
-    Test / parallelExecution := false,
+    // JavaFX Module mit dem korrekten Classifier für Apple Silicon (M-Chips)
+    libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map {
+      m => "org.openjfx" % s"javafx-$m" % "20" classifier javafxClassifier
+    },
 
-    // Scoverage Settings
+    Test / parallelExecution := false,
     coverageEnabled := true,
     coverageHighlighting := true
   )
-
