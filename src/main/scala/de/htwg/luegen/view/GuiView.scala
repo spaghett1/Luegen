@@ -5,7 +5,7 @@ import scalafx.application.JFXApp3
 import scalafx.application.Platform
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, Separator, Slider, TextField}
-import scalafx.scene.layout.{VBox, HBox, Priority}
+import scalafx.scene.layout.{VBox, HBox}
 import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
@@ -29,6 +29,9 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       width = 1200
       height = 800
       scene = new Scene {
+        val css = getClass.getResource("/styles.css")
+        if (css != null) stylesheets.add(css.toExternalForm)
+
         mainLayout = new VBox {
           padding = Insets(20)
           spacing = 15
@@ -42,12 +45,12 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
   private def createMenuLayout(): Seq[scalafx.scene.Node] = {
     val titleLabel = new Label("Willkommen bei Lügen") {
-      style = "-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: black;"
+      styleClass.add("title-text")
     }
 
     val startButton = new Button("Neues Spiel") {
       prefWidth = 250
-      style = "-fx-font-size: 16px;"
+      styleClass.addAll("modern-button", "action-button")
       onAction = _ => showConfigLayout()
     }
 
