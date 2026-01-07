@@ -1,19 +1,36 @@
-package luegen
+package de.htwg.luegen.Game
 
-import de.htwg.luegen.Model.GameModel
-import de.htwg.luegen.View.GameView
-import de.htwg.luegen.Controller.GameController
+import de.htwg.luegen.view.GameView
+import de.htwg.luegen.model.IGameModel
+import de.htwg.luegen.model.impl1.GameModel
+import de.htwg.luegen.controller.IGameController
+import de.htwg.luegen.controller.impl1.GameController
+import de.htwg.luegen.view.GuiView
 
 object Game {
   @main def init(): Unit = {
-    println("Spiel wird initialisiert...")
-    
-    val model = new GameModel()
+    val model: IGameModel = GameModel()
+    val controller: IGameController = GameController(model)
+    val tui = new GameView(controller)
+    val gui = new GuiView(controller)
 
-    val controller = new GameController(model)
-    
-    val view = new GameView(controller)
-    
-    controller.initGame()
+    // Wir lagern ALLES, was blockiert oder rechnet, in den Thread aus
+    val gameLogicThread = new Thread(() => {
+      // 1. Erst das Spiel initialisieren
+      controller.initGame()
+
+      // 2. Kurz warten, bis das Fenster der GUI wirklich da ist
+      Thread.sleep(1500)
+
+      // 3. Dann die TUI-Eingabeschleife starten
+      while (true) {
+        tui.handleInput()
+      }
+    })
+    gameLogicThread.setDaemon(true)
+    gameLogicThread.start()
+
+    // Der Haupt-Thread macht NUR die GUI und nichts anderes
+    gui.main(Array.empty)
   }
 }

@@ -1,7 +1,8 @@
+
 package de.htwg.luegen
 
-import de.htwg.luegen.Model.Player
-import de.htwg.luegen.View.Grid
+import de.htwg.luegen.model.impl1.Player
+import de.htwg.luegen.view.Grid
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -34,117 +35,96 @@ class GridSpec extends AnyWordSpec with Matchers {
   val pList = (1 to 8).map(i => Player(s"P$i")).toList
   val players4 = pList.take(4)
   val players8 = pList.take(8)
-
-  // NEU: Listen für die Grenzfälle 5, 6 und 7 zur Coverage-Erhöhung
   val players5 = pList.take(5)
   val players6 = pList.take(6)
   val players7 = pList.take(7)
 
 
-  "A Grid" when {
+  "A Grid (Functional Case Class)" when {
 
-    "initGrid is called" should {
+    "updateGridWithPlayers is called" should {
+      val initialGrid = Grid()
 
-      "Spielernamen mit ungerader Länge korrekt padden" in {
-        val players = List(Player("Odd"), Player("Even"))
-        val grid = new Grid()
-        grid.initGrid(players)
+      "die Spieler korrekt für 4 Spieler platzieren und ein NEUES Grid zurückgeben" in {
+        val newGrid = initialGrid.updateGridWithPlayers(players4)
 
-        grid.text(0) should include (" Odd")
+        // Prüfen der Immutability
+        newGrid should not be initialGrid
+        newGrid.lastPlayers should contain theSameElementsInOrderAs players4
+
+        // Prüfen der Zeichnung
+        newGrid.text(0).trim should include ("P1")
+        newGrid.text(5) should include ("| P4")
       }
 
-      "die Spieler korrekt für 4 Spieler platzieren" in {
-        val grid = new Grid()
-        grid.initGrid(players4)
+      "bei gleicher Spielerliste die GLEICHE Instanz zurückgeben (Effizienztest)" in {
+        // Zuerst initialisieren, um lastPlayers zu setzen
+        val firstGrid = initialGrid.updateGridWithPlayers(players4)
 
-        grid.text(0).trim should include ("P1")
-        grid.text(5) should include ("| P4")
+        // Nochmal mit der gleichen Liste aufrufen
+        val secondGrid = firstGrid.updateGridWithPlayers(players4)
+
+        // Prüfen der Effizienz
+        secondGrid should be theSameInstanceAs firstGrid
       }
 
-      // NEUER TEST: 5 Spieler (players.size > 4, but NOT > 5)
-      "die korrekte Struktur für 5 Spieler platzieren (Testet if > 4, else von if > 5)" in {
-        val grid = new Grid()
-        grid.initGrid(players5) // P1, P2, P3, P4, P5
+      "bei geänderter Spielerliste eine NEUE Instanz zurückgeben" in {
+        val firstGrid = initialGrid.updateGridWithPlayers(players4)
+        val secondGrid = firstGrid.updateGridWithPlayers(players5)
 
-        // P5 (Index 4) muss auf Zeile 0 erscheinen (durch das äußere if > 4)
-        grid.text(0) should include ("P5")
-
-        // Zeile 10 muss die Standard-Platzierung für P2 zeigen (durch den impliziten else-Fall von if > 5)
-        grid.text(10) should not include ("P6")
+        secondGrid should not be theSameInstanceAs(firstGrid)
+        secondGrid.lastPlayers should contain theSameElementsInOrderAs players5
       }
 
-      // NEUER TEST: 6 Spieler (players.size > 5, but NOT > 6)
-      "die korrekte Struktur für 6 Spieler platzieren (Testet if > 5, else von if > 6)" in {
-        val grid = new Grid()
-        grid.initGrid(players6) // P1, P2, P3, P4, P5, P6
-
-        // P6 (Index 5) muss auf Zeile 10 erscheinen (durch if > 5)
-        grid.text(10) should include ("P6")
-
-        // P7 (Index 6) darf NICHT auf Zeile 7 erscheinen (impliziter else-Fall von if > 6)
-        grid.text(7) should not include ("P7")
-        grid.text(7) should include ("| ")
+      "die korrekte Struktur für 5 Spieler platzieren" in {
+        val newGrid = initialGrid.updateGridWithPlayers(players5)
+        newGrid.text(0) should include ("P5")
+        newGrid.text(10) should not include ("P6")
       }
 
-      // NEUER TEST: 7 Spieler (players.size > 6, but NOT > 7)
-      "die korrekte Struktur für 7 Spieler platzieren (Testet if > 6, else von if > 7)" in {
-        val grid = new Grid()
-        grid.initGrid(players7) // P1 bis P7
+      "die korrekte Struktur für 6 Spieler platzieren" in {
+        val newGrid = initialGrid.updateGridWithPlayers(players6)
+        newGrid.text(10) should include ("P6")
+        newGrid.text(7) should include ("| ") // Kein P7/P8
+      }
 
-        // P7 (Index 6) muss auf Zeile 7 platziert werden (durch if > 6)
-        grid.text(7) should include ("P7")
-
-        // P8 (Index 7) darf NICHT auf Zeile 7 erscheinen (impliziter else-Fall von if > 7)
-        grid.text(7) should not include ("P8")
-
-        // P3 (Index 2) muss alleine auf Zeile 3 stehen (durch if > 6)
-        grid.text(3) should not include ("P4")
+      "die korrekte Struktur für 7 Spieler platzieren" in {
+        val newGrid = initialGrid.updateGridWithPlayers(players7)
+        newGrid.text(7) should include ("P7")
+        newGrid.text(7) should not include ("P8")
+        newGrid.text(3) should not include ("P4")
       }
 
       "die Spieler korrekt für 8 Spieler platzieren" in {
-        val grid = new Grid()
-        grid.initGrid(players8)
+        val newGrid = initialGrid.updateGridWithPlayers(players8)
+        newGrid.text(7) should include ("P7")
+        newGrid.text(7) should include ("P8")
+      }
 
-        grid.text(0) should include ("P1")
-        grid.text(0) should include ("P5")
-        grid.text(7) should include ("P7")
-        grid.text(7) should include ("P8")
+      "Spielernamen mit ungerader Länge korrekt padden" in {
+        val players = List(Player("Odd"), Player("Even"))
+        val newGrid = initialGrid.updateGridWithPlayers(players)
+
+        newGrid.text(0) should include (" Odd")
       }
     }
 
-    "printGrid is called" should {
+    "updateGridWithNumber is called" should {
 
-      "die Kartenanzahl korrekt im Center platzieren (einstellig)" in {
-        val grid = new Grid()
-        grid.initGrid(players4)
+      // Zuerst eine Grid-Instanz mit Spielerdaten erstellen
+      val grid4Players = Grid().updateGridWithPlayers(players4)
 
-        grid.printGrid(5)
+      "die Kartenanzahl korrekt im Center platzieren (einstellig) und String zurückgeben" in {
+        val output = grid4Players.updateGridWithNumber(5)
 
-        grid.text(5) should include ("|  5 |")
-        grid.text(5) should not include ("| 0 |")
+        output should include ("|  5 |")
+        output should not include ("| 0 |")
       }
 
-      "die Kartenanzahl korrekt im Center platzieren (zweistellig)" in {
-        val grid = new Grid()
-        grid.initGrid(players4)
+      "die Kartenanzahl korrekt im Center platzieren (zweistellig) und String zurückgeben" in {
+        val output = grid4Players.updateGridWithNumber(10)
 
-        grid.printGrid(10)
-
-        grid.text(5) should include ("| 10 |")
-      }
-    }
-
-    "utility methods" should {
-      "clearScreen sollte die korrekten ANSI-Escape-Sequenzen ausgeben" in {
-        val grid = new Grid()
-
-        val output = captureOutput {
-          grid.clearScreen()
-        }
-
-        val expected = "\n" * 20
-
-        output shouldBe expected
+        output should include ("| 10 |")
       }
     }
   }

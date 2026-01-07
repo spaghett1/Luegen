@@ -1,4 +1,4 @@
-package de.htwg.luegen.Controller
+package de.htwg.luegen.controller
 
 
 trait Observable {
@@ -9,3 +9,4 @@ trait Observable {
 trait Observer {
   def updateDisplay(): Unit
 }
+ 
