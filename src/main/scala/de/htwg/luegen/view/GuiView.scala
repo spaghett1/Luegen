@@ -9,12 +9,14 @@ import scalafx.scene.layout.{HBox, VBox}
 import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
+import scalafx.Includes.eventClosureWrapperWithParam
 import scalafx.scene.shape.Rectangle
 import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.MouseEvent
+import scalafx.Includes._
 
 import java.io.InputStream
 
@@ -216,16 +218,32 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       case TurnState.NeedsCardInput =>
         actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})"))
 
-        val cardsHBox = new HBox(5) {
+        val cardsHBox = new HBox(10) {
           alignment = Pos.Center
           children = player.hand.zipWithIndex.map { case (card, idx) =>
             val cardIdx = idx + 1
-            new Button(card.toString) {
-              style = if (selectedIndices.contains(cardIdx))
-                "-fx-background-color: lightblue; -fx-border-color: blue;"
-              else "-fx-background-color: white; -fx-border-color: black;"
+            val isSelected = selectedIndices.contains(cardIdx)
 
-              onAction = _ => {
+            val imagePath = s"/images/cards/${card.suit}${card.rank}.png"
+            val stream = getClass.getResourceAsStream(imagePath)
+
+            val cardImage = if (stream != null) {
+              new ImageView(new Image(stream)) {
+                fitHeight = 100
+                preserveRatio = true
+              }
+            } else {
+              new Label(card.toString)
+            }
+
+            new StackPane {
+              children = Seq(cardImage)
+              padding = Insets(5)
+              style = if (isSelected)
+                "-fx-border-color: #3498db; -fx-border-width: 4; -fx-background-color: rgba(52, 152, 219, 0.2);"
+              else "-fx-border-color: transparent;"
+
+              onMouseClicked = (e: MouseEvent) => {
                 if (selectedIndices.contains(cardIdx)) {
                   selectedIndices -= cardIdx
                 } else if (selectedIndices.size < 3) {
@@ -238,9 +256,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
         }
 
         val playBtn = new Button("Karten legen") {
-          // Deaktiviert, wenn keine Karte gewählt wurde
           disable = selectedIndices.isEmpty
-          style = "-fx-background-color: seagreen; -fx-text-fill: white; -fx-font-weight: bold;"
+          styleClass.addAll("modern-button", "action-button") // Nutzt deine CSS Klassen
           onAction = _ => {
             controller.handleCardInput(selectedIndices.toList)
             selectedIndices.clear()
