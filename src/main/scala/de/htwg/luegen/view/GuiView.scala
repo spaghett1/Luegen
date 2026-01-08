@@ -5,14 +5,18 @@ import scalafx.application.JFXApp3
 import scalafx.application.Platform
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, Separator, Slider, TextField}
-import scalafx.scene.layout.{VBox, HBox}
+import scalafx.scene.layout.{HBox, VBox}
 import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
 import scalafx.scene.shape.Rectangle
-import scalafx.scene.layout.{StackPane, Pane}
+import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.collections.ObservableBuffer
+import scalafx.scene.image.{Image, ImageView}
+import scalafx.scene.input.MouseEvent
+
+import java.io.InputStream
 
 class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
@@ -79,6 +83,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val playerSlider = new Slider(2, 8, 3) {
+      styleClass.add("white-slider")
       showTickLabels = true
       showTickMarks = true
       majorTickUnit = 1
@@ -88,6 +93,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val sliderLabel = new Label(s"Spieler: ${playerSlider.value.value.intValue()}")
+    { style = "-fx-font-size: 18px; -fx-text-fill: white;" }
     updateNameFields(playerSlider.value.value.intValue())
 
     playerSlider.value.onChange { (_, _, newValue) =>
@@ -111,9 +117,9 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
 
     mainLayout.children = Seq(
-      new Label("Konfiguration") { style = "-fx-font-size: 24px;" },
+      new Label("Konfiguration") { style = "-fx-font-size: 24px; -fx-text-fill: white;" },
       new HBox(15, sliderLabel, playerSlider) { alignment = Pos.Center },
-      new Label("Namen:"),
+      new Label("Namen:") { style = "-fx-font-size: 24px; -fx-text-fill: white;" },
       nameFieldsContainer,
       confirmBtn,
       new Button("Abbrechen") { onAction = _ => mainLayout.children = createMenuLayout() }
@@ -312,14 +318,33 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val discardedCount = controller.getDiscardedCount
-    val displayRank = controller.getRoundRank
-    val stackLabel = new Label(s"Deck: $discardedCount Rang: $displayRank") {
-      style = "-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"
-      layoutX = 150
-      layoutY = 135
+
+    val centerImage = new ImageView {
+      val imgStream = getClass.getResourceAsStream("/images/cards/card_back_red.png")
+
+      if (imgStream != null) {
+        image = new Image(imgStream)
+      } else {
+        println("Fehler: Bild unter /images/cards.png nicht gefunden!")
+      }
+
+      fitWidth = 60
+      preserveRatio = true
+      layoutX = 170
+      layoutY = 85
+
+      visible = discardedCount > 0
     }
 
-    pane.children.addAll(table, stackLabel)
+    //val discardedCount = controller.getDiscardedCount
+    val displayRank = controller.getRoundRank
+    val stackLabel = new Label(s"Deck: $discardedCount Rang: $displayRank") {
+      style = "-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;"
+      layoutX = 150
+      layoutY = 180
+    }
+
+    pane.children.addAll(table,centerImage, stackLabel)
     val players = controller.getCurrentPlayers
     val centerX = 200.0
     val centerY = 150.0
