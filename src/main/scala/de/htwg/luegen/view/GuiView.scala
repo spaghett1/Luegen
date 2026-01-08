@@ -17,6 +17,9 @@ import scalafx.collections.ObservableBuffer
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.MouseEvent
 import scalafx.Includes._
+import scalafx.scene.layout.{Background, BackgroundImage, BackgroundPosition, BackgroundRepeat, BackgroundSize}
+import scalafx.scene.image.Image
+import scalafx.geometry.Side
 
 import java.io.InputStream
 
@@ -32,8 +35,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
-      width = 1200
-      height = 800
+      width = 1800
+      height = 1200
       scene = new Scene {
         val css = getClass.getResource("/styles.css")
         if (css != null) stylesheets.add(css.toExternalForm)
@@ -42,6 +45,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
           padding = Insets(20)
           spacing = 15
           alignment = Pos.Center
+          background = createGameBackground()
           children = createMenuLayout()
         }
         root = mainLayout
@@ -51,7 +55,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
   private def createMenuLayout(): Seq[scalafx.scene.Node] = {
     val titleLabel = new Label("Willkommen bei Lügen") {
-      styleClass.add("title-text")
+       style = "-fx-font-size: 34px; -fx-text-fill: white;"
     }
 
     val startButton = new Button("Neues Spiel") {
@@ -91,7 +95,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       majorTickUnit = 1
       minorTickCount = 0
       snapToTicks = true
-      prefWidth = 200
+      prefWidth = 400
     }
 
     val sliderLabel = new Label(s"Spieler: ${playerSlider.value.value.intValue()}")
@@ -114,7 +118,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
         controller.handlePlayerCount(count)
         controller.handlePlayerNames(names)
-        showMainGameLayout() // WECHSEL ZUM SPIEL
+        showMainGameLayout()
       }
     }
 
@@ -204,7 +208,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       case TurnState.NeedsRankInput =>
         selectedIndices.clear()
         actionArea.children.addAll(
-          new Label("Wähle einen Rang für die Runde:"),
+          new Label("Wähle einen Rang für die Runde:") {style = "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"},
           new HBox(5) {
             alignment = Pos.Center
             children = controller.isValidRanks.map { r =>
@@ -216,7 +220,8 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
         )
 
       case TurnState.NeedsCardInput =>
-        actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})"))
+        actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})")
+        { style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"})
 
         val cardsHBox = new HBox(10) {
           alignment = Pos.Center
@@ -257,7 +262,7 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
 
         val playBtn = new Button("Karten legen") {
           disable = selectedIndices.isEmpty
-          styleClass.addAll("modern-button", "action-button") // Nutzt deine CSS Klassen
+          styleClass.addAll("modern-button", "action-button")
           onAction = _ => {
             controller.handleCardInput(selectedIndices.toList)
             selectedIndices.clear()
@@ -383,6 +388,32 @@ class GuiView(controller: IGameController) extends JFXApp3 with Observer {
       pane.children.add(pLabel)
     }
     pane
+  }
+
+  private def createGameBackground(): Background = {
+    val imgStream = getClass.getResourceAsStream("/images/background.png")
+    if (imgStream == null) {
+      println("Fehler: Hintergrundbild nicht gefunden!")
+      return Background.Empty
+    }
+
+    val bgImage = new Image(imgStream)
+    val backgroundSize = new BackgroundSize(
+      width = 100,
+      height = 100,
+      widthAsPercentage = true,
+      heightAsPercentage = true,
+      contain = false,
+      cover = true
+    )
+
+    new Background(Array(new BackgroundImage(
+      bgImage,
+      BackgroundRepeat.NoRepeat,
+      BackgroundRepeat.NoRepeat,
+      BackgroundPosition.Center,
+      backgroundSize
+    )))
   }
 
 
