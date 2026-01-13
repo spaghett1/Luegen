@@ -5,14 +5,23 @@ import scalafx.application.JFXApp3
 import scalafx.application.Platform
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, Separator, Slider, TextField}
-import scalafx.scene.layout.{VBox, HBox, Priority}
+import scalafx.scene.layout.{HBox, VBox}
 import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
+import scalafx.Includes.eventClosureWrapperWithParam
 import scalafx.scene.shape.Rectangle
-import scalafx.scene.layout.{StackPane, Pane}
+import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.collections.ObservableBuffer
+import scalafx.scene.image.{Image, ImageView}
+import scalafx.scene.input.MouseEvent
+import scalafx.Includes._
+import scalafx.scene.layout.{Background, BackgroundImage, BackgroundPosition, BackgroundRepeat, BackgroundSize}
+import scalafx.scene.image.Image
+import scalafx.geometry.Side
+
+import java.io.InputStream
 
 class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
@@ -26,13 +35,17 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
-      width = 1200
-      height = 800
+      width = 1800
+      height = 1200
       scene = new Scene {
+        val css = getClass.getResource("/styles.css")
+        if (css != null) stylesheets.add(css.toExternalForm)
+
         mainLayout = new VBox {
           padding = Insets(20)
           spacing = 15
           alignment = Pos.Center
+          background = createGameBackground()
           children = createMenuLayout()
         }
         root = mainLayout
@@ -42,12 +55,12 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
   private def createMenuLayout(): Seq[scalafx.scene.Node] = {
     val titleLabel = new Label("Willkommen bei Lügen") {
-      style = "-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: black;"
+       style = "-fx-font-size: 34px; -fx-text-fill: white;"
     }
 
     val startButton = new Button("Neues Spiel") {
       prefWidth = 250
-      style = "-fx-font-size: 16px;"
+      styleClass.addAll("modern-button", "action-button")
       onAction = _ => showConfigLayout()
     }
 
@@ -76,15 +89,17 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val playerSlider = new Slider(2, 8, 3) {
+      styleClass.add("white-slider")
       showTickLabels = true
       showTickMarks = true
       majorTickUnit = 1
       minorTickCount = 0
       snapToTicks = true
-      prefWidth = 200
+      prefWidth = 400
     }
 
     val sliderLabel = new Label(s"Spieler: ${playerSlider.value.value.intValue()}")
+    { style = "-fx-font-size: 18px; -fx-text-fill: white;" }
     updateNameFields(playerSlider.value.value.intValue())
 
     playerSlider.value.onChange { (_, _, newValue) =>
@@ -103,14 +118,14 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
         controller.handlePlayerCount(count)
         controller.handlePlayerNames(names)
-        showMainGameLayout() // WECHSEL ZUM SPIEL
+        showMainGameLayout()
       }
     }
 
     mainLayout.children = Seq(
-      new Label("Konfiguration") { style = "-fx-font-size: 24px;" },
+      new Label("Konfiguration") { style = "-fx-font-size: 24px; -fx-text-fill: white;" },
       new HBox(15, sliderLabel, playerSlider) { alignment = Pos.Center },
-      new Label("Namen:"),
+      new Label("Namen:") { style = "-fx-font-size: 24px; -fx-text-fill: white;" },
       nameFieldsContainer,
       confirmBtn,
       new Button("Abbrechen") { onAction = _ => mainLayout.children = createMenuLayout() }
@@ -193,7 +208,7 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
       case TurnState.NeedsRankInput =>
         selectedIndices.clear()
         actionArea.children.addAll(
-          new Label("Wähle einen Rang für die Runde:"),
+          new Label("Wähle einen Rang für die Runde:") {style = "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;"},
           new HBox(5) {
             alignment = Pos.Center
             children = controller.isValidRanks.map { r =>
@@ -205,18 +220,35 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
         )
 
       case TurnState.NeedsCardInput =>
-        actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})"))
+        actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})")
+        { style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"})
 
-        val cardsHBox = new HBox(5) {
+        val cardsHBox = new HBox(10) {
           alignment = Pos.Center
           children = player.hand.zipWithIndex.map { case (card, idx) =>
             val cardIdx = idx + 1
-            new Button(card.toString) {
-              style = if (selectedIndices.contains(cardIdx))
-                "-fx-background-color: lightblue; -fx-border-color: blue;"
-              else "-fx-background-color: white; -fx-border-color: black;"
+            val isSelected = selectedIndices.contains(cardIdx)
 
-              onAction = _ => {
+            val imagePath = s"/images/cards/${card.suit}${card.rank}.png"
+            val stream = getClass.getResourceAsStream(imagePath)
+
+            val cardImage = if (stream != null) {
+              new ImageView(new Image(stream)) {
+                fitHeight = 100
+                preserveRatio = true
+              }
+            } else {
+              new Label(card.toString)
+            }
+
+            new StackPane {
+              children = Seq(cardImage)
+              padding = Insets(5)
+              style = if (isSelected)
+                "-fx-border-color: #3498db; -fx-border-width: 4; -fx-background-color: rgba(52, 152, 219, 0.2);"
+              else "-fx-border-color: transparent;"
+
+              onMouseClicked = (e: MouseEvent) => {
                 if (selectedIndices.contains(cardIdx)) {
                   selectedIndices -= cardIdx
                 } else if (selectedIndices.size < 3) {
@@ -229,9 +261,8 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
         }
 
         val playBtn = new Button("Karten legen") {
-          // Deaktiviert, wenn keine Karte gewählt wurde
           disable = selectedIndices.isEmpty
-          style = "-fx-background-color: seagreen; -fx-text-fill: white; -fx-font-weight: bold;"
+          styleClass.addAll("modern-button", "action-button")
           onAction = _ => {
             controller.handleCardInput(selectedIndices.toList)
             selectedIndices.clear()
@@ -309,14 +340,33 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     }
 
     val discardedCount = controller.getDiscardedCount
-    val displayRank = controller.getRoundRank
-    val stackLabel = new Label(s"Deck: $discardedCount Rang: $displayRank") {
-      style = "-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"
-      layoutX = 150
-      layoutY = 135
+
+    val centerImage = new ImageView {
+      val imgStream = getClass.getResourceAsStream("/images/cards/card_back_red.png")
+
+      if (imgStream != null) {
+        image = new Image(imgStream)
+      } else {
+        println("Fehler: Bild unter /images/cards.png nicht gefunden!")
+      }
+
+      fitWidth = 60
+      preserveRatio = true
+      layoutX = 170
+      layoutY = 85
+
+      visible = discardedCount > 0
     }
 
-    pane.children.addAll(table, stackLabel)
+    //val discardedCount = controller.getDiscardedCount
+    val displayRank = controller.getRoundRank
+    val stackLabel = new Label(s"Deck: $discardedCount Rang: $displayRank") {
+      style = "-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;"
+      layoutX = 150
+      layoutY = 180
+    }
+
+    pane.children.addAll(table,centerImage, stackLabel)
     val players = controller.getCurrentPlayers
     val centerX = 200.0
     val centerY = 150.0
@@ -338,6 +388,32 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
       pane.children.add(pLabel)
     }
     pane
+  }
+
+  private def createGameBackground(): Background = {
+    val imgStream = getClass.getResourceAsStream("/images/background.png")
+    if (imgStream == null) {
+      println("Fehler: Hintergrundbild nicht gefunden!")
+      return Background.Empty
+    }
+
+    val bgImage = new Image(imgStream)
+    val backgroundSize = new BackgroundSize(
+      width = 100,
+      height = 100,
+      widthAsPercentage = true,
+      heightAsPercentage = true,
+      contain = false,
+      cover = true
+    )
+
+    new Background(Array(new BackgroundImage(
+      bgImage,
+      BackgroundRepeat.NoRepeat,
+      BackgroundRepeat.NoRepeat,
+      BackgroundPosition.Center,
+      backgroundSize
+    )))
   }
 
 
