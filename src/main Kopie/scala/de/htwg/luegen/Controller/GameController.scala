@@ -1,12 +1,10 @@
-package de.htwg.luegen.controller.impl1
+package de.htwg.luegen.controller
 
-import de.htwg.luegen.controller.*
 import de.htwg.luegen.model.IGameModel
-import de.htwg.luegen.model.fileIO.IFileIO
 
 import scala.collection.mutable.ListBuffer
 
-class GameController(using private var model: IGameModel, fileIo: IFileIO) extends IGameController {
+class GameController(private var model: IGameModel) extends IGameController {
   private val observers: ListBuffer[Observer] = ListBuffer()
 
   private val undoStack: ListBuffer[HistoryEntry] = ListBuffer()
@@ -114,15 +112,4 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
   override def getPlayedCards = model.getPlayedCards
   override def getInputError = model.getLastInputError
   override def getLog = model.getLogHistory
-
-  override def save: Unit = {
-    fileIo.save(model)
-    notifyObservers()
-  }
-
-  override def load: Unit = {
-    model = fileIo.load
-    notifyObservers()
-  }
 }
- 

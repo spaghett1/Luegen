@@ -1,0 +1,25 @@
+<memento>
+    <discardedCards> </discardedCards>
+    <roundRank> 9 </roundRank>
+    <lastPlayedCards> </lastPlayedCards>
+    <playerCount> 2 </playerCount>
+    <players>
+        <player>
+            <name> Luca </name>
+            <type> Human </type>
+            <hand> ♥3,♠B,♣8,♠5,♣6,♦7,♦3,♦A,♦6,♣3,♥9,♦D,♠6,♠K,♦10,♣10,♠2,♦2,♠10,♥B,♥K,♥2,♥5,♥10,♦K,♦9 </hand>
+        </player>
+        <player>
+            <name> Alex </name>
+            <type> Human </type>
+            <hand> ♣B,♣7,♦B,♥A,♠4,♠3,♣A,♣5,♥8,♥7,♥D,♣4,♠D,♦4,♣K,♣D,♦5,♥6,♣9,♠A,♣2,♥4,♠9,♦8,♠8,♠7 </hand>
+        </player>
+    </players>
+    <currentPlayerIndex> 1 </currentPlayerIndex>
+    <lastPlayerIndex> 0 </lastPlayerIndex>
+    <validRanks> 2345678910BDKA </validRanks>
+    <playOrder> 1,0 </playOrder>
+    <turnState> NeedsCardInput </turnState>
+    <amountPlayed> 0 </amountPlayed>
+    <lastAccusedIndex> 0 </lastAccusedIndex>
+</memento>

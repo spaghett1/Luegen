@@ -2,10 +2,6 @@ package de.htwg.luegen.model.impl1
 
 import de.htwg.luegen.model.impl1.Card
 
-trait PlayerType
-case object Human extends PlayerType
-case object AI extends PlayerType
-
 case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human) {
   import de.htwg.luegen.model.impl1.Card.*
   
@@ -29,4 +25,18 @@ case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerT
   def hasCards: Boolean = hand.nonEmpty
   
   def cardCount: Int = hand.size
+
+  def toXml: scala.xml.Elem  = {
+    <player>
+      <name> {name} </name>
+      <type> {playerType.toString} </type>
+      <hand> {hand.mkString(",")} </hand>
+    </player>
+  }
+
+}
+
+object Player {
+  import play.api.libs.json._
+  implicit val playerFormat: Format[Player] = Json.format[Player]
 }

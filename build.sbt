@@ -20,7 +20,9 @@ lazy val root = (project in file("."))
       // Nutze zusammenpassende Versionen für Scala 3
       "org.scalafx" %% "scalafx" % "20.0.0-R31",
       "org.scalatest" %% "scalatest" % "3.2.19" % "test",
-      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test
+      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
+      "org.scala-lang.modules" %% "scala-xml" % "2.4.0",
+      "com.typesafe.play" %% "play-json" % "2.10.3",
     ),
 
     // JavaFX Module mit dem korrekten Classifier für Apple Silicon (M-Chips)

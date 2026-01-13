@@ -1,6 +1,6 @@
-package de.htwg.luegen.model.impl1.Utils
+package de.htwg.luegen.model.Utils
 
-import de.htwg.luegen.model.impl1.{Card, Player}
+import de.htwg.luegen.model.{Card, Player}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
 

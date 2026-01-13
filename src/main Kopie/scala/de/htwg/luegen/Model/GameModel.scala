@@ -1,12 +1,10 @@
-package de.htwg.luegen.model.impl1
-
-import de.htwg.luegen.model.impl1.Utils.{DeckUtils, TurnOrderUtils}
-import de.htwg.luegen.model.{IGameModel, Memento}
-import de.htwg.luegen.TurnState
-import de.htwg.luegen.TurnState.*
+package de.htwg.luegen.model
 
 import scala.collection.mutable
 import scala.util.Random
+import de.htwg.luegen.model.Player
+import de.htwg.luegen.TurnState
+import de.htwg.luegen.TurnState.*
 
 case class GameModel(
   discardedCards: List[Card] = Nil,
@@ -95,7 +93,7 @@ case class GameModel(
     players(pIndexInModel)
   }
 
-  private def evaluateReveal(): GameModel = {
+  private def evaluateReveal(): impl1.GameModel = {
     val prevPlayer = getPrevPlayer
     val player = players(currentPlayerIndex)
     val lied = lastPlayedCards.exists(_.rank != roundRank)
@@ -116,7 +114,7 @@ case class GameModel(
     )
   }
 
-  private def drawAll(player: Player): GameModel = {
+  private def drawAll(player: Player): impl1.GameModel = {
     val playerIndex = players.indexOf(player)
     val updated = player.addCards(discardedCards)
     val updatedPlayers = players.updated(playerIndex, updated)
@@ -181,7 +179,7 @@ case class GameModel(
       amountPlayed,
       lastAccusedIndex,
     )
-  } 
+  }
 
   def restoreMemento(memento: Memento): IGameModel = {
     this.copy(

@@ -1,8 +1,10 @@
 package de.htwg.luegen.controller
 
+import de.htwg.luegen.model.Player
+import de.htwg.luegen.model.PlayerType
+import de.htwg.luegen.model.Card
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.model.IGameModel
-import de.htwg.luegen.model.impl1.{Card, Player, PlayerType}
 
 trait IGameController extends Observable {
   def initGame(): IGameModel
@@ -30,9 +32,6 @@ trait IGameController extends Observable {
   def getPlayedCards: List[Card]
   def getInputError: Option[String]
   def getLog: List[String]
-
-  def save: Unit
-  def load: Unit
   
 
 }

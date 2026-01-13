@@ -1,7 +1,6 @@
 package de.htwg.luegen.view
-
-import de.htwg.luegen.model.impl1.{AI, Human, Player}
 import de.htwg.luegen.controller.IGameController
+import de.htwg.luegen.model.{AI, Human, Player}
 import de.htwg.luegen.view.GameView
 
 import scala.io.StdIn
@@ -10,22 +9,16 @@ import scala.util.Failure
 import scala.util.Success
 
 trait GameScreen {
-  def display(using controller: IGameController): Unit
-  def processInput(input: String)(using controller: IGameController): Unit
+  def display(controller: IGameController): Unit
+  def processInput(input: String, controller: IGameController): Unit
 
-  def handleGlobalCommand(using controller: IGameController)(rawInput: String): Boolean = {
+  def handleGlobalCommand(controller: IGameController, rawInput: String): Boolean = {
     rawInput match {
       case "undo" => 
         controller.undo()
         true
       case "redo" => 
         controller.redo()
-        true
-      case "save" =>
-        controller.save
-        true
-      case "load" =>
-        controller.load
         true
       case _ => false
     }
@@ -41,14 +34,14 @@ case object NeedsPlayerCountScreen extends GameScreen {
     }
   }
 
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Wieviele Spieler? (2 - 8)")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
-    if (!handleGlobalCommand(input)) {
+  override def processInput(input: String, controller: IGameController): Unit = {
+    if (!handleGlobalCommand(controller, input)) {
       validateInput(input) match {
         case Success(count) => controller.handlePlayerCount(count)
         case Failure(e) => controller.handleError(e)
@@ -68,15 +61,15 @@ case object NeedsPlayerNamesScreen extends GameScreen {
     else Failure(new Exception(s"Gebe $playerCount Namen durch Komma getrennt ein! (max. 10 Zeichen"))
   }
 
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Gebe die Spielernamen ein(getrennt durch Kommas)")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
+  override def processInput(input: String, controller: IGameController): Unit = {
     
-    if (!handleGlobalCommand(input)) {
+    if (!handleGlobalCommand(controller, input)) {
       validateInput(input, controller.getPlayerCount) match {
         case Success(names) => controller.handlePlayerNames(names)
         case Failure(e) => controller.handleError(e)
@@ -96,15 +89,15 @@ case object NeedsRankInputScreen extends GameScreen {
     }
   }
 
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Sage einen Rang fuer die Runde an (2-10, B,D,K,A): ")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
+  override def processInput(input: String, controller: IGameController): Unit = {
     
-    if (!handleGlobalCommand(input)) {
+    if (!handleGlobalCommand(controller, input)) {
       val playerType = controller.getCurrentPlayerType
       val finalInput = playerType match {
         case AI => controller.isValidRanks.head
@@ -135,13 +128,13 @@ case object NeedsCardInputScreen extends GameScreen {
     }
   }
 
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
     println("Gebe Kartenindices ein, getrennt durch Kommas (max. 10 Zeichen): ")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
+  override def processInput(input: String, controller: IGameController): Unit = {
     
     val currentPlayer = controller.getCurrentPlayer
     val playerType = controller.getCurrentPlayerType
@@ -150,7 +143,7 @@ case object NeedsCardInputScreen extends GameScreen {
       case AI => "1"
     }
     
-    if (!handleGlobalCommand(finalInput)) {
+    if (!handleGlobalCommand(controller, finalInput)) {
       validateInput(finalInput, currentPlayer.hand.size) match {
         case Success(indices) => controller.handleCardInput(indices)
         case Failure(e) => controller.handleError(e)
@@ -161,14 +154,14 @@ case object NeedsCardInputScreen extends GameScreen {
 
 case object ChallengedLieWonScreen extends GameScreen {
   
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
     println("TODO")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
-    if (!handleGlobalCommand(input)) {
+  override def processInput(input: String, controller: IGameController): Unit = {
+    if (!handleGlobalCommand(controller, input)) {
       controller.setNextPlayer()
     }
   }
@@ -183,7 +176,7 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
     }
   }
 
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val error = controller.getInputError.getOrElse("")
     println(error)
 
@@ -191,7 +184,7 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
     println(s"Luege von ${prevPLayer.name} aufdecken? (j/n): ")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
+  override def processInput(input: String, controller: IGameController): Unit = {
     
     val currentPlayer = controller.getCurrentPlayer
     val playerType = controller.getCurrentPlayerType
@@ -200,7 +193,7 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
       case AI => "n"
     }
     
-    if (!handleGlobalCommand(rawInput)) {
+    if (!handleGlobalCommand(controller, rawInput)) {
       validateInput(rawInput) match {
         case Success(decision) => controller.handleChallengeDecision(decision)
         case Failure(e) => controller.handleError(e)
@@ -210,31 +203,30 @@ case object NeedsChallengeDecisionScreen extends GameScreen {
 }
 
 case object ChallengedLieLostScreen extends GameScreen {
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
     println("TODO")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
-    if (!handleGlobalCommand(input)) {
+  override def processInput(input: String, controller: IGameController): Unit = {
+    if (!handleGlobalCommand(controller, input)) {
       controller.setNextPlayer()
     }
   }
 }
 
 case object PlayedScreen extends GameScreen {
-  override def display(using controller: IGameController): Unit = {
+  override def display(controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val playedCards = controller.getPlayedCards
     
     println("TODO")
   }
 
-  override def processInput(input: String)(using controller: IGameController): Unit = {
-    if (!handleGlobalCommand(input)) {
+  override def processInput(input: String, controller: IGameController): Unit = {
+    if (!handleGlobalCommand(controller, input)) {
       controller.setNextPlayer()
     }
   }
 }
- 

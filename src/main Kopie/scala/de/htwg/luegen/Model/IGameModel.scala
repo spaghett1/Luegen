@@ -1,7 +1,7 @@
 package de.htwg.luegen.model
 
 import de.htwg.luegen.TurnState
-import de.htwg.luegen.model.impl1.{Card, Player}
+import de.htwg.luegen.model.Utils.Memento
 
 trait IGameModel {
   def playCards(selIndices: List[Int]): IGameModel
@@ -33,4 +33,3 @@ trait IGameModel {
   def getPlayedCards: List[Card]
   def isFirstTurn: Boolean
 }
- 

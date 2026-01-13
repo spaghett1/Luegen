@@ -14,7 +14,7 @@ import scalafx.scene.layout.{StackPane, Pane}
 import scalafx.scene.paint.Color
 import scalafx.collections.ObservableBuffer
 
-class GuiView(controller: IGameController) extends JFXApp3 with Observer {
+class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
   private var statusLabel: Label = _
   private var playerLabel: Label = _

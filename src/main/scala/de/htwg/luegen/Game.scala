@@ -1,5 +1,6 @@
 package de.htwg.luegen.Game
 
+import de.htwg.luegen.LuegenModule.given
 import de.htwg.luegen.view.GameView
 import de.htwg.luegen.model.IGameModel
 import de.htwg.luegen.model.impl1.GameModel
@@ -9,10 +10,10 @@ import de.htwg.luegen.view.GuiView
 
 object Game {
   @main def init(): Unit = {
-    val model: IGameModel = GameModel()
-    val controller: IGameController = GameController(model)
-    val tui = new GameView(controller)
-    val gui = new GuiView(controller)
+
+    val controller = summon[IGameController]
+    val tui = new GameView()
+    val gui = new GuiView()
 
     // Wir lagern ALLES, was blockiert oder rechnet, in den Thread aus
     val gameLogicThread = new Thread(() => {
@@ -20,7 +21,7 @@ object Game {
       controller.initGame()
 
       // 2. Kurz warten, bis das Fenster der GUI wirklich da ist
-      Thread.sleep(1500)
+      Thread.sleep(200)
 
       // 3. Dann die TUI-Eingabeschleife starten
       while (true) {
