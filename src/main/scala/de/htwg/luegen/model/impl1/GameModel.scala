@@ -92,7 +92,8 @@ case class GameModel(
   override def getPrevPlayer: Player = {
     val orderSize = playOrder.size
     if (orderSize == 0) return players(currentPlayerIndex)
-    val pIndexInOrder = (currentPlayerIndex - 1 + orderSize) % orderSize
+    val indexInOrder = playOrder.indexOf(currentPlayerIndex)
+    val pIndexInOrder = (indexInOrder - 1 + orderSize) % orderSize
     val pIndexInModel = playOrder(pIndexInOrder)
     players(pIndexInModel)
   }
