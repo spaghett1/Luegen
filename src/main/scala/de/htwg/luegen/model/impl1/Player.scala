@@ -1,6 +1,7 @@
 package de.htwg.luegen.model.impl1
 
 import de.htwg.luegen.model.impl1.Card
+import de.htwg.luegen.model.impl1.PlayerType.Human
 
 case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human) {
   import de.htwg.luegen.model.impl1.Card.*

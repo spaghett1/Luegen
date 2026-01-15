@@ -5,6 +5,7 @@ import de.htwg.luegen.model.fileIO.IFileIO
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.model.impl1.{Card, PlayerType}
 import de.htwg.luegen.model.impl1.*
+import de.htwg.luegen.model.impl1.PlayerType.{AI, Human}
 
 import scala.xml.{PrettyPrinter, XML}
 import java.io.{File, PrintWriter}

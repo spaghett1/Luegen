@@ -4,6 +4,7 @@ import de.htwg.luegen.model.impl1.Utils.{DeckUtils, TurnOrderUtils}
 import de.htwg.luegen.model.{IGameModel, Memento}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
+import de.htwg.luegen.model.impl1.PlayerType.Human
 
 import scala.collection.mutable
 import scala.util.Random

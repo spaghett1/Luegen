@@ -1,7 +1,8 @@
 package de.htwg.luegen
 
 import de.htwg.luegen.controller.IGameController
-import de.htwg.luegen.model.impl1.{AI, Card, GameModel, Player, Human}
+import de.htwg.luegen.model.impl1.{Card, GameModel, Player, PlayerType}
+import de.htwg.luegen.model.impl1.PlayerType.{Human, AI}
 import de.htwg.luegen.view._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

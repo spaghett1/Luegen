@@ -3,6 +3,8 @@ package de.htwg.luegen.model.impl1
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 import de.htwg.luegen.TurnState
+import de.htwg.luegen.model.impl1.PlayerType
+import de.htwg.luegen.model.impl1.PlayerType.Human
 
 class CardSpec extends AnyWordSpec with Matchers {
   "A Card" should {
