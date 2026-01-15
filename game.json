@@ -1,22 +1,34 @@
 {
-  "lastPlayedCards" : [ ],
-  "discardedCards" : [ ],
+  "lastPlayedCards" : [ {
+    "suit" : "♥",
+    "rank" : "10"
+  } ],
+  "discardedCards" : [ {
+    "suit" : "♦",
+    "rank" : "7"
+  } ],
   "lastAccusedIndex" : 0,
   "playerCount" : 2,
-  "playOrder" : [ ],
+  "playOrder" : [ 0, 1 ],
   "amountPlayed" : 0,
   "currentPlayerIndex" : 0,
-  "turnState" : "NeedsRankInput",
+  "turnState" : "NeedsChallengeDecision",
   "lastPlayerIndex" : 0,
   "validRanks" : [ "2", "3", "4", "5", "6", "7", "8", "9", "10", "B", "D", "K", "A" ],
-  "roundRank" : "",
+  "roundRank" : "10",
   "players" : [ {
     "name" : "Alice",
-    "hand" : [ ],
+    "hand" : [ {
+      "suit" : "♠",
+      "rank" : "A"
+    } ],
     "playerType" : "Human"
   }, {
-    "name" : "Bob",
-    "hand" : [ ],
-    "playerType" : "Human"
+    "name" : "Bot",
+    "hand" : [ {
+      "suit" : "♥",
+      "rank" : "10"
+    } ],
+    "playerType" : "AI"
   } ]
 }

@@ -21,6 +21,15 @@ class FileIO extends IFileIO {
     pw.close()
   }
 
+  def stringToCards(s: String): List[Card] = {
+    if (s.trim.isEmpty) Nil
+    else s.split(",").map { str =>
+      val suit = str.trim.take(1)
+      val rank = str.trim.drop(1)
+      Card(suit, rank)
+    }.toList
+  }
+
   override def load: IGameModel = {
     val file = scala.xml.XML.loadFile("game.xml")
 
@@ -34,12 +43,7 @@ class FileIO extends IFileIO {
     val amountPlayed = (file \ "amountPlayed").text.trim.toInt
     val players = (file \ "players" \ "player").map { playerNode =>
       val name = (playerNode \ "name").text.trim
-      val hand = (playerNode \ "hand" \ "card").map { cardNode =>
-        Card(
-          suit = (cardNode \"suit").text.trim,
-          rank = (cardNode \ "rank").text.trim
-        )
-      }.toList
+      val hand = stringToCards((playerNode \ "hand").text.trim)
 
       val pType = (playerNode \ "type").text.trim match {
         case "AI" => AI
@@ -49,16 +53,19 @@ class FileIO extends IFileIO {
       Player(name, hand, pType)
     }.toList
 
-    val lastPlayedCards = (file \ "lastPlayedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text.trim, (cardNode \ "rank").text.trim)
-    }.toList
+    val lastPlayedCards = stringToCards((file \ "lastPlayedCards").text.trim)
 
-    val discarded = (file \ "discardedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text.trim, (cardNode \ "rank").text.trim)
-    }.toList
+    val discarded = stringToCards((file \ "discardedCards").text.trim)
 
-    val order = (file \ "playOrder" \ "index").map(_.text.trim.toInt).toList
-    val ranks = (file \ "validRanks" \ "rank").map(_.text.trim).toList
+    val order = (file \ "playOrder").text.trim match {
+      case "" => Nil
+      case s => s.split(",").map(_.trim.toInt).toList
+    }
+
+    val ranks = (file \ "validRanks").text.trim match {
+      case "" => Nil
+      case s => s.split(",").map(_.trim).toList
+    }
 
     val memento = Memento(
       discardedCards = discarded,
