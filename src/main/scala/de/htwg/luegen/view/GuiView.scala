@@ -4,20 +4,18 @@ import de.htwg.luegen.model.impl1.Player
 import scalafx.application.JFXApp3
 import scalafx.application.Platform
 import scalafx.scene.Scene
-import scalafx.scene.control.{Button, Label, Separator, Slider, TextField}
-import scalafx.scene.layout.{HBox, VBox}
+import scalafx.scene.control.{Button, Label, MenuBar, MenuButton, MenuItem, Separator, SeparatorMenuItem, Slider, TextField}
+import scalafx.scene.layout.{Background, BackgroundImage, BackgroundPosition, BackgroundRepeat, BackgroundSize, BorderPane, HBox, Pane, StackPane, VBox}
 import scalafx.geometry.{Insets, Pos}
 import de.htwg.luegen.controller.{IGameController, Observer}
 import de.htwg.luegen.TurnState
 import scalafx.Includes.eventClosureWrapperWithParam
 import scalafx.scene.shape.Rectangle
-import scalafx.scene.layout.{Pane, StackPane}
 import scalafx.scene.paint.Color
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.MouseEvent
-import scalafx.Includes._
-import scalafx.scene.layout.{Background, BackgroundImage, BackgroundPosition, BackgroundRepeat, BackgroundSize}
+import scalafx.Includes.*
 import scalafx.scene.image.Image
 import scalafx.geometry.Side
 
@@ -32,6 +30,31 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
   override def start(): Unit = {
     controller.registerObserver(this)
+
+    val menuBar = new MenuBar {
+      menus = List(
+        new scalafx.scene.control.Menu("Datei") {
+          items = List(
+            new MenuItem("Speichern") {
+              onAction = _ => controller.save
+            },
+            new MenuItem("Laden") {
+              onAction = _ => controller.load
+            },
+            new MenuItem("Undo") {
+              onAction = _ => controller.undo()
+            },
+            new MenuItem("Redo") {
+              onAction = _ => controller.redo()
+            },
+            new SeparatorMenuItem(),
+            new MenuItem("Beenden") {
+              onAction = _ => sys.exit(0)
+            }
+          )
+        }
+      )
+    }
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
@@ -48,7 +71,10 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
           background = createGameBackground()
           children = createMenuLayout()
         }
-        root = mainLayout
+        root = new BorderPane {
+          top = menuBar
+          center = mainLayout
+        }
       }
     }
   }

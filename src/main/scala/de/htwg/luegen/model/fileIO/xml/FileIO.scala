@@ -23,23 +23,24 @@ class FileIO extends IFileIO {
   override def load: IGameModel = {
     val file = scala.xml.XML.loadFile("game.xml")
 
-    val roundRank = (file \ "roundRank").text
-    val playerCount = (file \ "playerCount").text.toInt
-    val currentPlayerIndex = (file \ "currentPlayerIndex").text.toInt
-    val turnState = TurnState.valueOf((file \ "turnState").text)
-    val lastPlayerIndex = (file \ "lastPlayerIndex").text.toInt
-    val lastAccusedIndex = (file \ "lastAccusedIndex").text.toInt
-    val amountPlayed = (file \ "amountPlayed").text.toInt
+    val roundRank = (file \ "roundRank").text.trim
+    val temp = (file \ "playerCount")
+    val playerCount = (file \ "playerCount").text.trim.toInt
+    val currentPlayerIndex = (file \ "currentPlayerIndex").text.trim.toInt
+    val turnState = TurnState.valueOf((file \ "turnState").text.trim)
+    val lastPlayerIndex = (file \ "lastPlayerIndex").text.trim.toInt
+    val lastAccusedIndex = (file \ "lastAccusedIndex").text.trim.toInt
+    val amountPlayed = (file \ "amountPlayed").text.trim.toInt
     val players = (file \ "players" \ "player").map { playerNode =>
-      val name = (playerNode \ "name").text
+      val name = (playerNode \ "name").text.trim
       val hand = (playerNode \ "hand" \ "card").map { cardNode =>
         Card(
-          suit = (cardNode \"suit").text,
-          rank = (cardNode \ "rank").text
+          suit = (cardNode \"suit").text.trim,
+          rank = (cardNode \ "rank").text.trim
         )
       }.toList
 
-      val pType = (playerNode \ "type").text match {
+      val pType = (playerNode \ "type").text.trim match {
         case "AI" => AI
         case _ => Human
       }
@@ -48,15 +49,15 @@ class FileIO extends IFileIO {
     }.toList
 
     val lastPlayedCards = (file \ "lastPlayedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text, (cardNode \ "rank").text)
+      Card((cardNode \ "suit").text.trim, (cardNode \ "rank").text.trim)
     }.toList
 
     val discarded = (file \ "discardedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text, (cardNode \ "rank").text)
+      Card((cardNode \ "suit").text.trim, (cardNode \ "rank").text.trim)
     }.toList
 
-    val order = (file \ "playOrder" \ "index").map(_.text.toInt).toList
-    val ranks = (file \ "validRanks" \ "rank").map(_.text).toList
+    val order = (file \ "playOrder" \ "index").map(_.text.trim.toInt).toList
+    val ranks = (file \ "validRanks" \ "rank").map(_.text.trim).toList
 
     val memento = Memento(
       discardedCards = discarded,

@@ -90,6 +90,7 @@ case class GameModel(
 
   override def getPrevPlayer: Player = {
     val orderSize = playOrder.size
+    if (orderSize == 0) return players(currentPlayerIndex)
     val pIndexInOrder = (currentPlayerIndex - 1 + orderSize) % orderSize
     val pIndexInModel = playOrder(pIndexInOrder)
     players(pIndexInModel)
@@ -129,6 +130,7 @@ case class GameModel(
   override def setNextPlayer(): IGameModel = {
     val lastState = turnState
     val orderSize = playOrder.size
+    if (orderSize == 0) return this
     val currentIndexInOrder = playOrder.indexOf(currentPlayerIndex)
     val (next, newRoundRank) = lastState match {
       case ChallengedLieWon =>
@@ -153,6 +155,8 @@ case class GameModel(
   override def setError(error: String): IGameModel = {
     this.copy(lastInputError = Some(error))
   }
+
+  override def getError(): Option[String] = this.lastInputError
   override def clearError(): IGameModel = this.copy(lastInputError = None)
 
   override def getPlayerCount: Int = this.playerCount

@@ -9,22 +9,23 @@ import de.htwg.luegen.model.fileIO.json.FileIO as JsonIO
 class FileIOSpec extends AnyWordSpec with Matchers {
   "FileIO" should {
     val model = GameModel()
-    model.handlePlayerCount(2)
-    model.handlePlayerNames(List("Alice", "Bob"))
+    val modelWithCount = model.setPlayerCount(2)
+    val modelWithPlayers = modelWithCount.setupPlayers(List("Alice", "Bob"))
 
     "save and load via XML" in {
       val xmlIO = new XmlIO
-      xmlIO.save(model)
+      xmlIO.save(modelWithPlayers)
       val loaded = xmlIO.load
-      loaded.playerCount should be(2)
-      loaded.getCurrentPlayer.name should be("Alice")
+      loaded.getPlayerCount should be(2)
+      loaded.getPlayers(loaded.getCurrentPlayerIndex).name should be("Alice")
     }
 
     "save and load via JSON" in {
       val jsonIO = new JsonIO
-      jsonIO.save(model)
+      jsonIO.save(modelWithPlayers)
       val loaded = jsonIO.load
-      loaded.playerCount should be(2)
+      loaded.getPlayerCount should be(2)
+      loaded.getPlayers(loaded.getCurrentPlayerIndex).name should be("Alice")
     }
   }
 }

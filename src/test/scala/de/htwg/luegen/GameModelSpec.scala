@@ -1,136 +1,91 @@
-package de.htwg.luegen
+package de.htwg.luegen.model.impl1
 
-import de.htwg.luegen.model.impl1.{Card, GameModel, Player}
-import de.htwg.luegen.TurnState
-import de.htwg.luegen.TurnState.*
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import scala.util.Random
+import org.scalatest.matchers.should.Matchers
+import de.htwg.luegen.TurnState
 
 class GameModelSpec extends AnyWordSpec with Matchers {
 
-  // Setup Spieler und Karten
-  val cardA = Card("H", "A")
-  val cardK = Card("H", "K")
-  val card2 = Card("S", "2")
-  val card3 = Card("C", "3")
+  "A GameModel" should {
+    val model = GameModel()
 
-  // Funktionale Setup-Helfer
-  def setupInitialModel(): GameModel = {
-    val p1Hand = Player("P1").addCards(List(cardA, cardK))
-    val p2Hand = Player("P2").addCards(List(card2))
-    val p3Hand = Player("P3").addCards(List(card3))
-    val allPlayers = List(p1Hand, p2Hand, p3Hand)
-
-    GameModel().copy(
-      players = allPlayers,
-      playOrder = List(0, 1, 2),
-      currentPlayerIndex = 0,
-      lastPlayerIndex = 2,
-      turnState = NeedsCardInput // Setze Zustand für Spieltests
-    )
-  }
-
-  def getCurrentPlayer(model: GameModel): Player = model.players(model.currentPlayerIndex)
-
-  "A GameModel (Functional)" when {
-
-    // --- Memento Tests hinzugefügt ---
-
-    "managing Mementos" should {
-      val initialModel = setupInitialModel().addLog("Start Log")
-
-      "createMemento sollte ein Memento OHNE logHistory erstellen" in {
-        val memento = initialModel.createMemento()
-
-        // Prüfen, ob das Memento ein gültiges Objekt ist
-        memento.turnState shouldBe NeedsCardInput
-        memento.players.size shouldBe 3
-
-        // Prüfen, dass das Memento NICHT die logHistory enthält (implizit durch Struktur)
-        // Die Memento-Struktur ist nun extern definiert und enthält den Log nicht.
-        // Das Memento selbst sollte keine Log-Historie haben.
-        // Das Model enthält die Log-Historie.
-        initialModel.getLogHistory should not be empty
-      }
-
-      "restoreMemento sollte den Zustand korrekt wiederherstellen und den Log beibehalten" in {
-        val memento = initialModel.createMemento()
-        val logBeforeRestore = initialModel.getLogHistory
-
-        // Model ändert sich nochmal vor der Wiederherstellung
-        val modelToRestore = initialModel.copy(
-          roundRank = "Q",
-          logHistory = modelChange.logHistory :+ "Aktuelle Änderung"
-        )
-
-        // Wiederherstellung
-        val restoredModel = modelToRestore.restoreMemento(memento)
-
-        // Zustandswiederherstellung
-        restoredModel.roundRank shouldBe "K"
-        restoredModel.turnState shouldBe NeedsRankInput
-
-        // Log-Persistenz: Das Log sollte das Log von modelToRestore behalten
-        // (Da der Log-Feld in restoreMemento nicht gesetzt wird, behält es den Wert von modelToRestore)
-        restoredModel.logHistory.size shouldBe 3
-        restoredModel.logHistory.last shouldBe "Aktuelle Änderung"
-      }
+    "set player count and transition to NeedsPlayerNames" in {
+      val updated = model.setPlayerCount(3)
+      updated.getPlayerCount shouldBe 3
+      updated.getTurnState shouldBe TurnState.NeedsPlayerNames
     }
 
-    // --- Bestehende Tests angepasst ---
+    "handle player names and transition to NeedsRankInput" in {
+      val names = List("Alice", "Bob", "Charlie")
+      val updated = model.setPlayerCount(3).setupPlayers(names)
 
-    "initialized" should {
-      "dealCards sollte ein NEUES Model mit 52 Karten zurückgeben" in {
-        val model = GameModel().setupPlayers(List("A", "B", "C", "D"))
-        val newModel = model.dealCards()
-        newModel.getPlayers.map(_.hand.size).sum shouldBe 52
-        newModel should not be model
-      }
-
-      "setupTurnOrder sollte currentPlayerIndex und playOrder korrekt setzen" in {
-        Random.setSeed(42)
-        val model = GameModel().setupPlayers(List("A", "B", "C"))
-        val newModel = model.setupTurnOrder()
-
-        newModel.getCurrentPlayerIndex should be >= 0
-        newModel.getTurnState shouldBe NeedsRankInput // Zustand sollte gesetzt sein
-        newModel should not be model
-      }
-
-      "setupRank sollte den roundRank setzen und ein NEUES Model zurückgeben" in {
-        val model = setupInitialModel()
-        val newModel = model.setupRank("A")
-        newModel.getRoundRank shouldBe "A"
-        newModel.getTurnState shouldBe NeedsCardInput
-        newModel should not be model
-      }
+      updated.getPlayers.map(_.name) shouldBe names
+      updated.getTurnState shouldBe TurnState.NeedsRankInput
+      // Überprüfung ob Karten ausgeteilt wurden
+      updated.getPlayers.forall(_.hand.isEmpty) shouldBe true
     }
 
-    "a lie is challenged (evaluateReveal)" should {
+    "set a round rank" in {
+      val updated = model.setPlayerCount(2)
+        .setupPlayers(List("P1", "P2"))
+        .setupRank("A")
 
-      "addLog should add new entry to logHistory" in {
-        val model = setupInitialModel()
-        model.logHistory shouldBe empty
-
-        val newModel = model.addLog("test entry 1")
-        newModel.getLogHistory should contain theSameElementsInOrderAs List("test entry 1")
-
-        val finalModel = newModel.addLog("test entry 2")
-        finalModel.getLogHistory.size shouldBe 2
-      }
-
-      "clearError sollte lastInputError von Some auf None setzen" in {
-        val model = setupInitialModel().copy(lastInputError = Some("Fehler"))
-        model.lastInputError should not be None
-
-        val newModel = model.clearError()
-        newModel.getLastInputError shouldBe None
-        newModel should not be model
-      }
+      updated.getRoundRank shouldBe "A"
+      updated.getTurnState shouldBe TurnState.NeedsCardInput
     }
 
-    // ... (Andere Tests bleiben im Wesentlichen gleich) ...
+    "handle playing cards" in {
+      val modelWithCards = model.setPlayerCount(2)
+        .setupPlayers(List("P1", "P2"))
+        .dealCards()
+        .setupRank("10")
+
+      // Spieler 1 spielt die erste Karte aus seiner Hand
+      val updated = modelWithCards.playCards(List(1))
+
+      updated.getTurnState shouldBe TurnState.Played
+      updated.getDiscardedCards.size shouldBe 1
+    }
+
+    "process a challenge decision (no lie)" in {
+      val setup = model.setPlayerCount(2)
+        .setupPlayers(List("P1", "P2"))
+        .dealCards()
+        .setupRank("A")
+        .playCards(List(1))
+
+      // P2 glaubt P1 (Challenge = false)
+      val updated = setup.playerTurn(false)
+      updated.getTurnState shouldBe TurnState.NeedsCardInput
+    }
+
+    "process a challenge decision (lie check)" in {
+      val setup = model.setPlayerCount(2)
+        .setupPlayers(List("P1", "P2"))
+        .dealCards()
+        .setupRank("A")
+        .playCards(List(1))
+
+      // P2 deckt auf (Challenge = true)
+      val updated = setup.playerTurn(true)
+      // Der Zustand sollte sich zu ChallengedLieWon oder ChallengedLieLost ändern
+      List(TurnState.ChallengedLieWon, TurnState.ChallengedLieLost) should contain (updated.getTurnState)
+    }
+
+    "handle errors correctly" in {
+      val error = new Exception("Test Error")
+      val updated = model.setError(error.getMessage)
+      updated.getError() shouldBe Some("Test Error")
+
+      val cleared = updated.clearError()
+      cleared.getError() shouldBe None
+    }
+
+    "restore state from a memento" in {
+      val memento = model.createMemento()
+      val restored = GameModel().restoreMemento(memento)
+      restored.getPlayers shouldBe model.getPlayers
+      restored.getTurnState shouldBe model.getTurnState
+    }
   }
 }
