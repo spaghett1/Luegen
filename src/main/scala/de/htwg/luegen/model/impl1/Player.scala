@@ -2,7 +2,7 @@ package de.htwg.luegen.model.impl1
 
 import de.htwg.luegen.model.impl1.Card
 
-case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human) {
+case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerType = Human, discardedQuartets: List[String] = Nil) {
   import de.htwg.luegen.model.impl1.Card.*
   
   def addCards(cards: List[Card]): Player = {
@@ -25,6 +25,21 @@ case class Player(name: String = "", hand: List[Card] = Nil, playerType: PlayerT
   def hasCards: Boolean = hand.nonEmpty
   
   def cardCount: Int = hand.size
+
+  def discardQuartets(): (Player, List[Card]) = {
+    val grouped = hand.groupBy(_.rank)
+    // Finde Ränge, von denen 4 Karten vorhanden sind
+    val quartetRanks = grouped.filter(_._2.size == 4).keys.toList
+
+    if (quartetRanks.isEmpty) {
+      (this, Nil)
+    } else {
+      val quartets = grouped.filter(_._2.size == 4).values.flatten.toList
+      val newHand = hand.filterNot(quartets.contains)
+      // Erstelle neuen Player mit reduzierter Hand und aktualisierter Quartett-Liste
+      (this.copy(hand = newHand, discardedQuartets = discardedQuartets ++ quartetRanks), quartets)
+    }
+  }
 
   def toXml: scala.xml.Elem  = {
     <player>

@@ -12,6 +12,7 @@ enum TurnState {
   case NeedsRankInput
   case NeedsCardInput
   case NeedsChallengeDecision
+  case GameOver
 }
 
 object TurnState {

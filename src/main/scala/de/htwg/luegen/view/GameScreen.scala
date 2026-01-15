@@ -164,7 +164,6 @@ case object ChallengedLieWonScreen extends GameScreen {
   override def display(using controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
-    println("TODO")
   }
 
   override def processInput(input: String)(using controller: IGameController): Unit = {
@@ -237,4 +236,23 @@ case object PlayedScreen extends GameScreen {
     }
   }
 }
+
+case object GameOverScreen extends GameScreen {
+  override def display(using controller: IGameController): Unit = {
+    println("###############################")
+    println("          GAME OVER           ")
+    println(controller.getInputError.getOrElse(""))
+    println("###############################")
+    println("Tippe 'new' für ein neues Spiel oder 'exit'.")
+  }
+
+  override def processInput(input: String)(using controller: IGameController): Unit = {
+    input match {
+      case "new" => controller.handlePlayerCount(0) // Oder deine Reset-Logik
+      case _ => System.exit(0)
+    }
+  }
+}
+
+
  

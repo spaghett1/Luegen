@@ -127,6 +127,17 @@ case class GameModel(
   }
 
   override def setNextPlayer(): IGameModel = {
+    val updatedPlayers = players.map(p => p.discardQuartets()._1)
+    
+    val loserOpt = updatedPlayers.find(_.discardedQuartets.contains("D"))
+
+    if (loserOpt.isDefined) {
+      return this.copy(
+        players = updatedPlayers,
+        turnState = TurnState.GameOver,
+        lastInputError = Some(s"GAME OVER: ${loserOpt.get.name} hat 4 Damen und verloren!")
+      )
+    }
     val lastState = turnState
     val orderSize = playOrder.size
     val currentIndexInOrder = playOrder.indexOf(currentPlayerIndex)

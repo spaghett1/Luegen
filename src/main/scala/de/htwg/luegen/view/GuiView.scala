@@ -205,6 +205,18 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     }
 
     state match {
+      case TurnState.GameOver =>
+        val msg = controller.getInputError.getOrElse("Das Spiel ist vorbei!")
+        actionArea.children.addAll(
+          new Label("Spiel beendet") {
+            style = "-fx-font-size: 32px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;"
+          },
+          new Button("Neues Spiel starten") {
+            styleClass.addAll("modern-button", "action-button")
+            onAction = _ => showConfigLayout()
+          }
+        )
+
       case TurnState.NeedsRankInput =>
         selectedIndices.clear()
         actionArea.children.addAll(
@@ -223,8 +235,26 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
         actionArea.children.add(new Label(s"Wähle 1-3 Karten (Gewählt: ${selectedIndices.size})")
         { style = "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"})
 
-        val cardsHBox = new HBox(10) {
-          alignment = Pos.Center
+        // Wir nutzen ein Pane statt einer HBox für manuelle Positionierung
+        val cardsPane = new Pane {
+          val maxViewWidth = 800.0 // Die maximale Breite, die die Karten einnehmen dürfen
+          val cardWidth = 100.0    // Die Breite einer einzelnen Karte (fitHeight ist 100)
+          val totalNormalWidth = player.hand.size * (cardWidth + 10) // Normale Breite mit Puffer
+
+          // Berechne den Versatz (Spacing):
+          // Entweder normal (110) oder gestaucht, falls nicht genug Platz ist
+          val spacing = if (totalNormalWidth > maxViewWidth && player.hand.size > 1) {
+            (maxViewWidth - cardWidth) / (player.hand.size - 1)
+          } else {
+            cardWidth + 10
+          }
+
+          // Zentrierung des Panes berechnen
+          val actualWidth = if (player.hand.size > 0) (player.hand.size - 1) * spacing + cardWidth else 0
+          prefWidth = actualWidth
+          maxWidth = actualWidth
+          prefHeight = 120
+
           children = player.hand.zipWithIndex.map { case (card, idx) =>
             val cardIdx = idx + 1
             val isSelected = selectedIndices.contains(cardIdx)
@@ -232,21 +262,34 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
             val imagePath = s"/images/cards/${card.suit}${card.rank}.png"
             val stream = getClass.getResourceAsStream(imagePath)
 
-            val cardImage = if (stream != null) {
+            val cardNode = if (stream != null) {
               new ImageView(new Image(stream)) {
                 fitHeight = 100
                 preserveRatio = true
               }
             } else {
-              new Label(card.toString)
+              new Label(card.toString) { style = "-fx-background-color: white; -fx-padding: 10;" }
             }
 
             new StackPane {
-              children = Seq(cardImage)
+              children = Seq(cardNode)
               padding = Insets(5)
-              style = if (isSelected)
-                "-fx-border-color: #3498db; -fx-border-width: 4; -fx-background-color: rgba(52, 152, 219, 0.2);"
-              else "-fx-border-color: transparent;"
+              layoutX = idx * spacing
+
+              style = if (isSelected) {
+                "-fx-border-color: #3498db; " +
+                  "-fx-border-width: 4; " +
+                  "-fx-border-radius: 5; " +
+                  "-fx-background-radius: 5; " +
+                  "-fx-background-color: rgba(52, 152, 219, 0.4); " +
+                  "-fx-translate-y: -15;"
+            } else {
+            "-fx-border-color: black; " +
+              "-fx-border-width: 1; " +
+              "-fx-border-radius: 5; " +
+              "-fx-background-color: white; " +
+              "-fx-background-radius: 5;"
+          }
 
               onMouseClicked = (e: MouseEvent) => {
                 if (selectedIndices.contains(cardIdx)) {
@@ -268,7 +311,14 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
             selectedIndices.clear()
           }
         }
-        actionArea.children.addAll(cardsHBox, playBtn)
+
+        // Zentrierung im Layout sicherstellen
+        val centeredCards = new HBox {
+          alignment = Pos.Center
+          children = Seq(cardsPane)
+        }
+
+        actionArea.children.addAll(centeredCards, playBtn)
 
       case TurnState.NeedsChallengeDecision =>
         val prevPlayer = controller.getPrevPlayer
