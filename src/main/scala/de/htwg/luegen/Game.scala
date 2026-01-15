@@ -28,10 +28,15 @@ object Game {
         tui.handleInput()
       }
     })
-    gameLogicThread.setDaemon(true)
+    gameLogicThread.setDaemon(false)
     gameLogicThread.start()
 
-    // Der Haupt-Thread macht NUR die GUI und nichts anderes
-    gui.main(Array.empty)
+    try {
+      gui.main(Array.empty)
+    } catch {
+      case e: Throwable =>
+        println("\n[System] GUI konnte im Docker nicht gestartet werden")
+    }
+
   }
 }
