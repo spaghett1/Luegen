@@ -212,7 +212,6 @@ case object ChallengedLieLostScreen extends GameScreen {
   override def display(using controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val prevPlayer = controller.getPrevPlayer
-    println("TODO")
   }
 
   override def processInput(input: String)(using controller: IGameController): Unit = {
@@ -226,8 +225,6 @@ case object PlayedScreen extends GameScreen {
   override def display(using controller: IGameController): Unit = {
     val currentPlayer = controller.getCurrentPlayer
     val playedCards = controller.getPlayedCards
-    
-    println("TODO")
   }
 
   override def processInput(input: String)(using controller: IGameController): Unit = {
