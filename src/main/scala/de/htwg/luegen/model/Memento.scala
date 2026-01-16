@@ -29,7 +29,7 @@ case class Memento(
       <players> {players.map(_.toXml)} </players>
       <currentPlayerIndex> {currentPlayerIndex} </currentPlayerIndex>
       <lastPlayerIndex> {lastPlayerIndex} </lastPlayerIndex>
-      <validRanks> {validRanks } </validRanks>
+      <validRanks> {validRanks.mkString(",")} </validRanks>
       <playOrder> {playOrder.mkString(",")} </playOrder>
       <turnState> {turnState} </turnState>
       <amountPlayed> {amountPlayed} </amountPlayed>

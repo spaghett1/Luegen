@@ -1,126 +1,145 @@
 package de.htwg.luegen
 
-import de.htwg.luegen.controller.impl1.GameController
-import de.htwg.luegen.model.*
-import de.htwg.luegen.model.impl1.{AI, Card, GameModel, Player, PlayerType}
-import de.htwg.luegen.TurnState.*
-import de.htwg.luegen.view.{GameScreen, GameView, NeedsCardInputScreen, NeedsChallengeDecisionScreen, NeedsPlayerCountScreen, NeedsPlayerNamesScreen, NeedsRankInputScreen}
+import de.htwg.luegen.model.impl1.{Card, Player}
+import de.htwg.luegen.model.impl1.PlayerType.{Human, AI}
+import de.htwg.luegen.view._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, PrintStream}
-import scala.Console.{withIn, withOut}
-
-// Mock Controller, der handleRawInput aufzeichnet
-class MockInputController(initialModel: GameModel = GameModel()) extends GameController(initialModel) {
-  var lastRawInput: String = ""
-  var executionCount: Int = 0
-
-  override def handleRawInput(rawInput: String): GameModel = {
-    lastRawInput = rawInput
-    executionCount += 1
-    // Rückgabe eines Dummy-Models (damit der Code weiterläuft)
-    initialModel.copy(turnState = Played)
-  }
-
-  // Dummy Getter für die View
-  override def getCurrentPlayer: Player = initialModel.players.headOption.getOrElse(Player("Test"))
-  override def getPrevPlayer: Player = initialModel.players.lastOption.getOrElse(Player("Prev"))
-  override def getCurrentPlayerType: PlayerType = initialModel.players.headOption.getOrElse(Player("Test")).playerType
-  override def isValidRanks: List[String] = List("2", "A")
-}
+import scala.util.{Failure, Success}
 
 class GameScreenSpec extends AnyWordSpec with Matchers {
-  private val originalIn = System.in
-  private val originalOut = System.out
 
-  // Helfer für I/O Simulation
-  def simulateScreenInput(input: String, model: GameModel = GameModel(), screen: GameScreen): (MockInputController, String) = {
-    // Stellt den Input-Stream bereit
-    val inputNewLinw = input + System.lineSeparator()
-    val inputStream = new ByteArrayInputStream(input.getBytes("UTF-8"))
-    val outputStream = new ByteArrayOutputStream()
-    val printStream = new PrintStream(outputStream, true, "UTF-8")
+  "GameScreenSpec mit StubController" should {
 
-    System.setIn(inputStream)
-    System.setOut(printStream)
+    "globale Befehle in handleGlobalCommand korrekt verarbeiten" in {
+      val controller = new StubController
+      val screen = NeedsPlayerCountScreen // Stellvertretend für alle Screens
 
-    val mockController = new MockInputController(model)
-    // GameView instanziieren, die den Controller nutzt
-    val dummyView = new GameView(mockController)
+      screen.handleGlobalCommand(using controller)("undo") shouldBe true
+      controller.lastCalledMethod shouldBe "undo"
 
-    try {
-      withIn(inputStream) {
-        withOut(outputStream) {
-          screen.renderAndHandleInput(mockController, dummyView)
+      screen.handleGlobalCommand(using controller)("redo") shouldBe true
+      controller.lastCalledMethod shouldBe "redo"
+
+      screen.handleGlobalCommand(using controller)("save") shouldBe true
+      controller.lastCalledMethod shouldBe "save"
+
+      screen.handleGlobalCommand(using controller)("load") shouldBe true
+      controller.lastCalledMethod shouldBe "load"
+
+      screen.handleGlobalCommand(using controller)("egal") shouldBe false
+    }
+
+    "NeedsPlayerCountScreen" should {
+      "Eingaben validieren" in {
+        NeedsPlayerCountScreen.validateInput("4") shouldBe Success(4)
+        NeedsPlayerCountScreen.validateInput("1").isFailure shouldBe true
+        NeedsPlayerCountScreen.validateInput("abc").isFailure shouldBe true
+      }
+
+      "display aufrufen ohne abzustürzen" in {
+        val controller = new StubController
+        controller.mockInputError = Some("Fehler")
+        noException should be thrownBy NeedsPlayerCountScreen.display(using controller)
+      }
+
+      "den Controller bei korrekter Eingabe aufrufen" in {
+        val controller = new StubController
+        NeedsPlayerCountScreen.processInput("4")(using controller)
+        controller.lastPlayerCount shouldBe 4
+      }
+
+      "handleError bei falscher Eingabe aufrufen" in {
+        val controller = new StubController
+        NeedsPlayerCountScreen.processInput("9")(using controller)
+        controller.lastCalledMethod shouldBe "handleError"
+      }
+    }
+
+    "NeedsPlayerNamesScreen" should {
+      "Namen korrekt validieren" in {
+        NeedsPlayerNamesScreen.validateInput("Alice, Bob", 2) shouldBe Success(List("Alice", "Bob"))
+        NeedsPlayerNamesScreen.validateInput("Alice", 2).isFailure shouldBe true
+      }
+
+      "Namen an den Controller weitergeben" in {
+        val controller = new StubController
+        controller.mockPlayerCount = 2
+        NeedsPlayerNamesScreen.processInput("Alice, Bob")(using controller)
+        controller.lastPlayerNames shouldBe List("Alice", "Bob")
+      }
+    }
+
+    "NeedsRankInputScreen" should {
+      "Rang-Eingaben validieren" in {
+        val ranks = List("10", "A")
+        NeedsRankInputScreen.validateInput("10", ranks) shouldBe Success("10")
+        NeedsRankInputScreen.validateInput("K", ranks).isFailure shouldBe true
+      }
+
+      "KI-Spieler automatisch behandeln" in {
+        val controller = new StubController
+        controller.mockCurrentPlayerType = AI
+        controller.mockValidRanks = List("Ass")
+
+        NeedsRankInputScreen.processInput("irrelevant")(using controller)
+        controller.lastRoundRank shouldBe "Ass"
+      }
+    }
+
+    "NeedsCardInputScreen" should {
+      "Karten-Indices validieren" in {
+        NeedsCardInputScreen.validateInput("1, 2", 5) shouldBe Success(List(1, 2))
+        NeedsCardInputScreen.validateInput("1, 2, 3, 4", 5).isFailure shouldBe true // Max 3 Karten
+        NeedsCardInputScreen.validateInput("6", 5).isFailure shouldBe true // Index zu hoch
+      }
+
+      "Karten-Play an Controller senden" in {
+        val controller = new StubController
+        controller.mockCurrentPlayer = Player("Alice", List(Card("S", "A"), Card("H", "10")))
+
+        NeedsCardInputScreen.processInput("1, 2")(using controller)
+        controller.lastCardSelection shouldBe List(1, 2)
+      }
+    }
+
+    "NeedsChallengeDecisionScreen" should {
+      "j/n validieren" in {
+        NeedsChallengeDecisionScreen.validateInput("j") shouldBe Success(true)
+        NeedsChallengeDecisionScreen.validateInput("n") shouldBe Success(false)
+      }
+
+      "PrevPlayer im Display anzeigen" in {
+        val controller = new StubController
+        controller.mockPrevPlayer = Player("Lügner")
+        noException should be thrownBy NeedsChallengeDecisionScreen.display(using controller)
+      }
+
+      "Entscheidung an Controller senden" in {
+        val controller = new StubController
+        NeedsChallengeDecisionScreen.processInput("j")(using controller)
+        controller.lastChallengeDecision shouldBe Some(true)
+      }
+    }
+
+    "Ergebnis-Screens (Played, Won, Lost)" should {
+      "bei jeder Eingabe zum nächsten Spieler springen" in {
+        val controller = new StubController
+
+        PlayedScreen.processInput("")(using controller)
+        controller.lastCalledMethod shouldBe "setNextPlayer"
+
+        ChallengedLieWonScreen.processInput("ok")(using controller)
+        controller.lastCalledMethod shouldBe "setNextPlayer"
+      }
+
+      "display ohne Fehler ausführen" in {
+        val controller = new StubController
+        noException should be thrownBy {
+          PlayedScreen.display(using controller)
+          ChallengedLieWonScreen.display(using controller)
         }
       }
-      printStream.flush()
-      (mockController, outputStream.toString("UTF-8").trim)
-    } finally {
-      System.setIn(originalIn)
-      System.setOut(originalOut)
-    }
-  }
-
-  // Allgemeines Setup-Model für Input-Tests
-  val testPlayer = Player("Human", List(Card("H", "A")))
-  val aiPlayer = Player("AI", List(Card("H", "K")), AI)
-  val baseModel = GameModel().copy(
-    players = List(testPlayer, aiPlayer),
-    currentPlayerIndex = 0,
-    playerCount = 2
-  )
-
-  "GameScreen Objects" should {
-
-    "NeedsPlayerCountScreen (Human) should read input and delegate" in {
-      val (controller, output) = simulateScreenInput("4", baseModel.copy(turnState = NeedsPlayerCount), NeedsPlayerCountScreen)
-      output should include("Wieviele Spieler?")
-      controller.lastRawInput shouldBe "4"
-      controller.executionCount shouldBe 1
-    }
-
-    "NeedsPlayerNamesScreen (Human) should read input and delegate" in {
-      val (controller, output) = simulateScreenInput("Max,Anna", baseModel.copy(turnState = NeedsPlayerNames), NeedsPlayerNamesScreen)
-      output should include("Gebe die Spielernamen ein")
-      controller.lastRawInput shouldBe "Max,Anna"
-    }
-
-    "NeedsRankInputScreen (Human) should read input and delegate" in {
-      val (controller, output) = simulateScreenInput("A", baseModel.copy(turnState = NeedsRankInput), NeedsRankInputScreen)
-      output should include("Sage einen Rang")
-      controller.lastRawInput shouldBe "A"
-    }
-
-    "NeedsRankInputScreen (AI) should use default rank and delegate" in {
-      // Das ReadLine wird übersprungen, AI wählt den ersten validen Rang ("2" im Mock Controller)
-      val (controller, output) = simulateScreenInput("", baseModel.copy(turnState = NeedsRankInput, players = List(aiPlayer)), NeedsRankInputScreen)
-      controller.lastRawInput shouldBe "2"
-      // Der Prompt wird trotzdem ausgegeben, da er außerhalb der AI-Logik liegt
-      output should include("Sage einen Rang")
-    }
-
-    "NeedsCardInputScreen (Human) should read input and delegate" in {
-      val (controller, output) = simulateScreenInput("1,2", baseModel.copy(turnState = NeedsCardInput), NeedsCardInputScreen)
-      output should include("Gebe Kartenindices ein")
-      controller.lastRawInput shouldBe "1,2"
-    }
-
-    "NeedsCardInputScreen (AI) should use default index '1' and delegate" in {
-      val (controller, output) = simulateScreenInput("", baseModel.copy(turnState = NeedsCardInput, players = List(aiPlayer)), NeedsCardInputScreen)
-      controller.lastRawInput shouldBe "1"
-    }
-
-    "NeedsChallengeDecisionScreen (Human) should read input and delegate" in {
-      val (controller, output) = simulateScreenInput("j", baseModel.copy(turnState = NeedsChallengeDecision), NeedsChallengeDecisionScreen)
-      output should include("Luege von AI aufdecken? (j/n)")
-      controller.lastRawInput shouldBe "j"
-    }
-
-    "NeedsChallengeDecisionScreen (AI) should use default 'n' and delegate" in {
-      val (controller, output) = simulateScreenInput("", baseModel.copy(turnState = NeedsChallengeDecision, players = List(aiPlayer)), NeedsChallengeDecisionScreen)
-      controller.lastRawInput shouldBe "n"
     }
   }
 }

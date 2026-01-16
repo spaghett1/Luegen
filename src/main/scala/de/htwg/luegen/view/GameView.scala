@@ -37,7 +37,7 @@ class GameView(using controller: IGameController) extends Observer {
     val state = controller.getTurnState
     val log = controller.getLog
 
-    println(log)
+    if (log.nonEmpty) println(log)
 
     if (players.nonEmpty) {
       val player = controller.getCurrentPlayer

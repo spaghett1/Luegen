@@ -5,6 +5,7 @@ import de.htwg.luegen.model.fileIO.IFileIO
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.model.impl1.{Card, PlayerType}
 import de.htwg.luegen.model.impl1.*
+import de.htwg.luegen.model.impl1.PlayerType.{AI, Human}
 
 import scala.xml.{PrettyPrinter, XML}
 import java.io.{File, PrintWriter}
@@ -20,26 +21,31 @@ class FileIO extends IFileIO {
     pw.close()
   }
 
+  def stringToCards(s: String): List[Card] = {
+    if (s.trim.isEmpty) Nil
+    else s.split(",").map { str =>
+      val suit = str.trim.take(1)
+      val rank = str.trim.drop(1)
+      Card(suit, rank)
+    }.toList
+  }
+
   override def load: IGameModel = {
     val file = scala.xml.XML.loadFile("game.xml")
 
-    val roundRank = (file \ "roundRank").text
-    val playerCount = (file \ "playerCount").text.toInt
-    val currentPlayerIndex = (file \ "currentPlayerIndex").text.toInt
-    val turnState = TurnState.valueOf((file \ "turnState").text)
-    val lastPlayerIndex = (file \ "lastPlayerIndex").text.toInt
-    val lastAccusedIndex = (file \ "lastAccusedIndex").text.toInt
-    val amountPlayed = (file \ "amountPlayed").text.toInt
+    val roundRank = (file \ "roundRank").text.trim
+    val temp = (file \ "playerCount")
+    val playerCount = (file \ "playerCount").text.trim.toInt
+    val currentPlayerIndex = (file \ "currentPlayerIndex").text.trim.toInt
+    val turnState = TurnState.valueOf((file \ "turnState").text.trim)
+    val lastPlayerIndex = (file \ "lastPlayerIndex").text.trim.toInt
+    val lastAccusedIndex = (file \ "lastAccusedIndex").text.trim.toInt
+    val amountPlayed = (file \ "amountPlayed").text.trim.toInt
     val players = (file \ "players" \ "player").map { playerNode =>
-      val name = (playerNode \ "name").text
-      val hand = (playerNode \ "hand" \ "card").map { cardNode =>
-        Card(
-          suit = (cardNode \"suit").text,
-          rank = (cardNode \ "rank").text
-        )
-      }.toList
+      val name = (playerNode \ "name").text.trim
+      val hand = stringToCards((playerNode \ "hand").text.trim)
 
-      val pType = (playerNode \ "type").text match {
+      val pType = (playerNode \ "type").text.trim match {
         case "AI" => AI
         case _ => Human
       }
@@ -47,16 +53,19 @@ class FileIO extends IFileIO {
       Player(name, hand, pType)
     }.toList
 
-    val lastPlayedCards = (file \ "lastPlayedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text, (cardNode \ "rank").text)
-    }.toList
+    val lastPlayedCards = stringToCards((file \ "lastPlayedCards").text.trim)
 
-    val discarded = (file \ "discardedCards" \ "card").map { cardNode =>
-      Card((cardNode \ "suit").text, (cardNode \ "rank").text)
-    }.toList
+    val discarded = stringToCards((file \ "discardedCards").text.trim)
 
-    val order = (file \ "playOrder" \ "index").map(_.text.toInt).toList
-    val ranks = (file \ "validRanks" \ "rank").map(_.text).toList
+    val order = (file \ "playOrder").text.trim match {
+      case "" => Nil
+      case s => s.split(",").map(_.trim.toInt).toList
+    }
+
+    val ranks = (file \ "validRanks").text.trim match {
+      case "" => Nil
+      case s => s.split(",").map(_.trim).toList
+    }
 
     val memento = Memento(
       discardedCards = discarded,

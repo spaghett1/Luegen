@@ -4,6 +4,7 @@ import de.htwg.luegen.model.impl1.Utils.{DeckUtils, TurnOrderUtils}
 import de.htwg.luegen.model.{IGameModel, Memento}
 import de.htwg.luegen.TurnState
 import de.htwg.luegen.TurnState.*
+import de.htwg.luegen.model.impl1.PlayerType.Human
 
 import scala.collection.mutable
 import scala.util.Random
@@ -90,7 +91,9 @@ case class GameModel(
 
   override def getPrevPlayer: Player = {
     val orderSize = playOrder.size
-    val pIndexInOrder = (currentPlayerIndex - 1 + orderSize) % orderSize
+    if (orderSize == 0) return players(currentPlayerIndex)
+    val indexInOrder = playOrder.indexOf(currentPlayerIndex)
+    val pIndexInOrder = (indexInOrder - 1 + orderSize) % orderSize
     val pIndexInModel = playOrder(pIndexInOrder)
     players(pIndexInModel)
   }
@@ -140,6 +143,7 @@ case class GameModel(
     }
     val lastState = turnState
     val orderSize = playOrder.size
+    if (orderSize == 0) return this
     val currentIndexInOrder = playOrder.indexOf(currentPlayerIndex)
     val (next, newRoundRank) = lastState match {
       case ChallengedLieWon =>
@@ -164,6 +168,8 @@ case class GameModel(
   override def setError(error: String): IGameModel = {
     this.copy(lastInputError = Some(error))
   }
+
+  override def getError(): Option[String] = this.lastInputError
   override def clearError(): IGameModel = this.copy(lastInputError = None)
 
   override def getPlayerCount: Int = this.playerCount

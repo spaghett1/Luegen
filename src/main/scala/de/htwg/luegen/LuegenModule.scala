@@ -14,5 +14,4 @@ object LuegenModule {
   given IGameController = GameController()
 
   given IFileIO = xml.FileIO()
-
 }

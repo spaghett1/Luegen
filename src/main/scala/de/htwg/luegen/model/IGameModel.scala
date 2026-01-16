@@ -15,6 +15,7 @@ trait IGameModel {
   def addLog(entry: String): IGameModel
   
   def setError(error: String): IGameModel
+  def getError(): Option[String]
   def clearError(): IGameModel
   
   def createMemento(): Memento
