@@ -114,6 +114,7 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
   override def getPlayedCards = model.getPlayedCards
   override def getInputError = model.getLastInputError
   override def getLog = model.getLogHistory
+  override def getAllDiscardedQuartets = model.getPlayers.flatMap(_.discardedQuartets).distinct
 
   override def save: Unit = {
     fileIo.save(model)

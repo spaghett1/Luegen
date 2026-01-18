@@ -30,7 +30,6 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
   override def start(): Unit = {
     controller.registerObserver(this)
-
     val menuBar = new MenuBar {
       menus = List(
         new scalafx.scene.control.Menu("Datei") {
@@ -48,6 +47,9 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
               onAction = _ => controller.redo()
             },
             new SeparatorMenuItem(),
+            new MenuItem("Hauptmenü") {
+              onAction = _ => mainLayout.children = createMenuLayout()
+            },
             new MenuItem("Beenden") {
               onAction = _ => sys.exit(0)
             }
@@ -58,8 +60,9 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
-      width = 1800
-      height = 1200
+      maximized = true
+      fullScreen = false
+      onCloseRequest = _ => System.exit(0)
       scene = new Scene {
         val css = getClass.getResource("/styles.css")
         if (css != null) stylesheets.add(css.toExternalForm)
@@ -73,7 +76,9 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
         }
         root = new BorderPane {
           top = menuBar
+          left = null
           center = mainLayout
+          style = "-fx-background-color: transparent;"
         }
       }
     }
@@ -159,8 +164,8 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
   }
   
   private def showMainGameLayout(): Unit = {
-    statusLabel = new Label("Spiel beginnt...") { style = "-fx-font-size: 18px; -fx-font-weight: bold;" }
-    playerLabel = new Label("")
+    statusLabel = new Label("Spiel beginnt...") { style = "-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;" }
+    playerLabel = new Label("") {style = "-fx-text-fill: white; -fx-font-size: 14px" }
 
     gameBoard = new VBox {
       spacing = 20
@@ -180,10 +185,7 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
       statusLabel,
       playerLabel,
       new Separator(),
-      gameBoard,
-      new Separator(),
-      controls,
-      new Button("Hauptmenü") { onAction = _ => mainLayout.children = createMenuLayout() }
+      gameBoard
     )
   }
 
@@ -191,16 +193,17 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     Platform.runLater {
       try {
         val state = controller.getTurnState
+        val borderPane = stage.scene().root().asInstanceOf[javafx.scene.layout.BorderPane]
 
      
         state match {
           case TurnState.NeedsPlayerCount | TurnState.NeedsPlayerNames =>
-            
+            borderPane.setLeft(null)
             showConfigLayout()
 
           case _ =>
             if (statusLabel == null) showMainGameLayout()
-
+            borderPane.setLeft(createQuartetDisplay().delegate)
             val currentPlayer = controller.getCurrentPlayer
             statusLabel.text = s"Status: $state"
             playerLabel.text = s"Am Zug: ${currentPlayer.name}"
@@ -338,7 +341,6 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
           }
         }
 
-        // Zentrierung im Layout sicherstellen
         val centeredCards = new HBox {
           alignment = Pos.Center
           children = Seq(cardsPane)
@@ -490,6 +492,41 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
       BackgroundPosition.Center,
       backgroundSize
     )))
+  }
+
+  private def createQuartetDisplay(): VBox = {
+    // Zuerst die Daten vom Controller holen
+    val discardedQuartets = controller.getAllDiscardedQuartets
+
+    new VBox {
+      spacing = 10
+      padding = Insets(20)
+      alignment = Pos.TopLeft
+      minWidth = 150
+      style = "-fx-background-color: #8B4513; " +
+        "-fx-border-color: #5D2E0A; " +
+        "-fx-border-width: 0 2 2 0;"
+
+      children = Seq(
+        new Label("Entfernte\nQuartette:") {
+          style = "-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;"
+        }
+        ) ++ discardedQuartets.map { rank =>
+          val imagePath = s"/images/cards/♠$rank.png"
+          val stream = getClass.getResourceAsStream(imagePath)
+
+          if (stream != null) {
+            new ImageView(new Image(stream)) {
+              fitHeight = 60
+              preserveRatio = true
+            }
+          } else {
+            new Label(s"[$rank]") {
+              style = "-fx-text-fill: white;"
+            }
+          }
+        }
+    }
   }
 
 
