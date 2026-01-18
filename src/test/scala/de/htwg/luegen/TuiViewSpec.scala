@@ -4,9 +4,11 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 import de.htwg.luegen.StubController
 import de.htwg.luegen.model.impl1.{Card, Player, PlayerType}
-import de.htwg.luegen.model.impl1.PlayerType.{Human, AI}
+import de.htwg.luegen.model.impl1.PlayerType.{AI, Human}
 import de.htwg.luegen.TurnState
-import java.io.ByteArrayOutputStream
+import de.htwg.luegen.TurnState.NeedsCardInput
+
+import java.io.{ByteArrayOutputStream, StringReader}
 
 class TuiViewSpec extends AnyWordSpec with Matchers {
 
@@ -35,6 +37,19 @@ class TuiViewSpec extends AnyWordSpec with Matchers {
       outputNoRank should include("Sage einen Rang fuer die Runde an (2-10, B,D,K,A):")
     }
 
+    "display the grid correctly if no roundRank is present" in {
+      val controller = new StubController
+      val view = new GameView(using controller)
+
+      controller.mockTurnState = NeedsCardInput
+      controller.mockRoundRank = "A"
+      controller.currentPlayers = List(bob, alice)
+      val output = capture {
+        view.updateDisplay()
+      }
+      output should include ("Aktueller Rang: A")
+    }
+
     "init the grid correctly" in {
       val controller = new StubController
       val view = new GameView(using controller)
@@ -50,11 +65,13 @@ class TuiViewSpec extends AnyWordSpec with Matchers {
       // Testet die Delegation (Zeile 60)
       controller.mockTurnState = TurnState.NeedsPlayerCount
 
+      val in = new StringReader("4")
       // Da wir StdIn.readLine nicht blockieren wollen, prüfen wir die
       // zugrunde liegende Screen-Logik, die von handleInput aufgerufen wird
       noException should be thrownBy {
-        // Simuliert den Aufruf von .processInput(input) aus Zeile 60
-        NeedsPlayerCountScreen.processInput("4")(using controller)
+        Console.withIn(in) {
+          view.handleInput()
+        }
       }
       controller.lastPlayerCount shouldBe 4
     }

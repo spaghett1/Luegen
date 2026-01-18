@@ -24,6 +24,7 @@ class StubController extends IGameController {
   var mockInputError: Option[String] = None
   var mockTurnState: TurnState = TurnState.NoTurn
   var currentPlayers: List[Player] = Nil
+  var mockRoundRank: String = ""
 
   override def handlePlayerCount(count: Int): IGameModel = {
     lastCalledMethod = "handlePlayerCount"
@@ -82,7 +83,7 @@ class StubController extends IGameController {
   override def registerObserver(o: Observer): Unit = {}
   override def notifyObservers(): Unit = {}
   override def initGame(): IGameModel = null
-  override def getRoundRank: String = ""
+  override def getRoundRank: String = mockRoundRank
   override def getDiscardedCount: Int = 0
   override def getPlayedCards: List[Card] = Nil
   override def getIsFirstTurn: Boolean = false
