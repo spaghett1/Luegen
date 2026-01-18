@@ -34,5 +34,5 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     coverageEnabled := true,
     coverageHighlighting := true,
-    coverageExcludedPackages := ".*GuiView.*"
+    coverageExcludedPackages := ".*de.htwg.luegen.view.GuiView.*"
   )
