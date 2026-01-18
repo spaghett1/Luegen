@@ -131,9 +131,16 @@ case class GameModel(
 
   override def setNextPlayer(): IGameModel = {
     val updatedPlayers = players.map(p => p.discardQuartets()._1)
-    
-    val loserOpt = updatedPlayers.find(_.discardedQuartets.contains("D"))
+    val winnerOpt = updatedPlayers.find(_.hand.isEmpty)
+    if (winnerOpt.isDefined) {
+      return this.copy(
+        players = updatedPlayers,
+        turnState = TurnState.GameOver,
+        lastInputError = Some(s"GEWONNEN: ${winnerOpt.get.name} hat keine Karten mehr und gewonnen!")
+      )
+    }
 
+    val loserOpt = updatedPlayers.find(_.discardedQuartets.contains("D"))
     if (loserOpt.isDefined) {
       return this.copy(
         players = updatedPlayers,
@@ -143,7 +150,7 @@ case class GameModel(
     }
     val lastState = turnState
     val orderSize = playOrder.size
-    if (orderSize == 0) return this
+    if (orderSize == 0) return this.copy(players = updatedPlayers)
     val currentIndexInOrder = playOrder.indexOf(currentPlayerIndex)
     val (next, newRoundRank) = lastState match {
       case ChallengedLieWon =>
@@ -156,6 +163,7 @@ case class GameModel(
     val nextInModel = playOrder(next)
     val nextTurnState = if (newRoundRank.isEmpty) NeedsRankInput else NeedsChallengeDecision
     this.copy(
+      players = updatedPlayers,
       roundRank = newRoundRank,
       currentPlayerIndex = nextInModel,
       lastPlayerIndex = currentPlayerIndex,

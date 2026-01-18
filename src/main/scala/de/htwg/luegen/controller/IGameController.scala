@@ -30,6 +30,7 @@ trait IGameController extends Observable {
   def getPlayedCards: List[Card]
   def getInputError: Option[String]
   def getLog: List[String]
+  def getAllDiscardedQuartets: List[String]
 
   def save: Unit
   def load: Unit
