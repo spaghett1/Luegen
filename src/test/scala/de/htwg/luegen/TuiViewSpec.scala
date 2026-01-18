@@ -19,6 +19,9 @@ class TuiViewSpec extends AnyWordSpec with Matchers {
 
   "GameView (TUI)" should {
 
+    val alice = Player("Alice", List(Card("H", "10"), Card("KD", "10")))
+    val bob = Player("Bob", List(Card("C", "10"), Card("S", "10")))
+
     "das Grid und den aktuellen Rang korrekt anzeigen (Screenshot Zeile 45-49)" in {
       val controller = new StubController
       val view = new GameView(using controller)
@@ -26,9 +29,18 @@ class TuiViewSpec extends AnyWordSpec with Matchers {
       // Setup: Keine Runden-Rang gesetzt (Testet Zeile 49: "Keiner")
       controller.mockTurnState = TurnState.NeedsRankInput
       controller.mockCurrentPlayer = Player("Alice", List(Card("♠", "A")), Human)
+      controller.currentPlayers = List(bob, alice)
 
       val outputNoRank = capture { view.updateDisplay() }
       outputNoRank should include("Sage einen Rang fuer die Runde an (2-10, B,D,K,A):")
+    }
+
+    "init the grid correctly" in {
+      val controller = new StubController
+      val view = new GameView(using controller)
+      noException should be thrownBy {
+        view.initGrid(List(alice, bob))
+      }
     }
 
     "Input-Anfragen basierend auf dem State delegieren (Screenshot Zeile 55-61)" in {
@@ -81,6 +93,30 @@ class TuiViewSpec extends AnyWordSpec with Matchers {
         view.startGamePrompt(player)
       }
       output should include(s"Das Spiel startet mit test")
+    }
+
+    "correctly exec challengerWonMessage" in {
+      val controller = new StubController
+      val view = new GameView(using controller)
+
+      val output = capture {
+        view.challengerWonMessage(bob, alice)
+      }
+
+      output should include ("Alice hat gelogen!")
+      output should include ("Er zieht alle Karten.")
+    }
+
+    "correctly exec challengerLostMessage" in {
+      val controller = new StubController
+      val view = new GameView(using controller)
+
+      val output = capture {
+        view.challengerLostMessage(bob, alice)
+      }
+
+      output should include("Alice hat die Wahrheit gesagt!")
+      output should include("Bob zieht alle Karten!")
     }
   }
 }
