@@ -87,4 +87,6 @@ class StubController extends IGameController {
   override def getIsFirstTurn: Boolean = false
   override def getLog: List[String] = Nil
   override def getCurrentPlayers: List[Player] = Nil
+
+  override def getAllDiscardedQuartets: List[String] = Nil
 }
