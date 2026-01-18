@@ -8,7 +8,6 @@ import de.htwg.luegen.TurnState
 import de.htwg.luegen.controller.Observer
 
 class StubController extends IGameController {
-  // --- TRACKER: Hier speichern wir, was der Screen aufgerufen hat ---
   var lastCalledMethod: String = ""
   var lastPlayerCount: Int = 0
   var lastPlayerNames: List[String] = Nil
@@ -17,7 +16,6 @@ class StubController extends IGameController {
   var lastChallengeDecision: Option[Boolean] = None
   var lastErrorMsg: String = ""
 
-  // --- MOCKS: Diese Werte geben wir dem Screen zurück ---
   var mockPlayerCount: Int = 2
   var mockCurrentPlayer: Player = Player("Alice", Nil, Human)
   var mockCurrentPlayerType: PlayerType = Human
@@ -26,7 +24,6 @@ class StubController extends IGameController {
   var mockInputError: Option[String] = None
   var mockTurnState: TurnState = TurnState.NoTurn
 
-  // --- Implementierung der IGameController Methoden ---
   override def handlePlayerCount(count: Int): IGameModel = {
     lastCalledMethod = "handlePlayerCount"
     lastPlayerCount = count
@@ -73,7 +70,6 @@ class StubController extends IGameController {
   override def save: Unit = { lastCalledMethod = "save" }
   override def load: Unit = { lastCalledMethod = "load" }
 
-  // --- Getter (Geben die konfigurierten Mock-Werte zurück) ---
   override def getPlayerCount: Int = mockPlayerCount
   override def getCurrentPlayer: Player = mockCurrentPlayer
   override def getCurrentPlayerType: PlayerType = mockCurrentPlayerType
@@ -82,7 +78,6 @@ class StubController extends IGameController {
   override def getInputError: Option[String] = mockInputError
   override def getTurnState: TurnState = mockTurnState
 
-  // --- Dummy-Implementierungen (Nicht für Screens benötigt) ---
   override def registerObserver(o: Observer): Unit = {}
   override def notifyObservers(): Unit = {}
   override def initGame(): IGameModel = null

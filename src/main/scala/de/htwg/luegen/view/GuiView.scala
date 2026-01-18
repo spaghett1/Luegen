@@ -58,8 +58,9 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
     stage = new JFXApp3.PrimaryStage {
       title = "Lügen"
-      width = 1800
-      height = 1200
+      maximized = true
+      fullScreen = false
+      onCloseRequest = _ => sys.exit(0)
       scene = new Scene {
         val css = getClass.getResource("/styles.css")
         if (css != null) stylesheets.add(css.toExternalForm)

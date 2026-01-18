@@ -1,191 +1,36 @@
 {
   "lastPlayedCards" : [ {
-    "suit" : "♣",
-    "rank" : "K"
-  }, {
     "suit" : "♥",
-    "rank" : "8"
-  }, {
-    "suit" : "♣",
-    "rank" : "5"
+    "rank" : "10"
   } ],
   "discardedCards" : [ {
-    "suit" : "♣",
-    "rank" : "K"
-  }, {
-    "suit" : "♥",
-    "rank" : "8"
-  }, {
-    "suit" : "♣",
-    "rank" : "5"
+    "suit" : "♦",
+    "rank" : "7"
   } ],
   "lastAccusedIndex" : 0,
-  "playerCount" : 3,
-  "playOrder" : [ 2, 0, 1 ],
-  "amountPlayed" : 3,
+  "playerCount" : 2,
+  "playOrder" : [ 0, 1 ],
+  "amountPlayed" : 0,
   "currentPlayerIndex" : 0,
-  "turnState" : "NeedsCardInput",
-  "lastPlayerIndex" : 2,
+  "turnState" : "NeedsChallengeDecision",
+  "lastPlayerIndex" : 0,
   "validRanks" : [ "2", "3", "4", "5", "6", "7", "8", "9", "10", "B", "D", "K", "A" ],
-  "roundRank" : "K",
+  "roundRank" : "10",
   "players" : [ {
-    "name" : "Alex4",
+    "name" : "Alice",
     "hand" : [ {
       "suit" : "♠",
-      "rank" : "B"
-    }, {
-      "suit" : "♦",
-      "rank" : "6"
-    }, {
-      "suit" : "♠",
-      "rank" : "D"
-    }, {
-      "suit" : "♥",
-      "rank" : "9"
-    }, {
-      "suit" : "♠",
-      "rank" : "6"
-    }, {
-      "suit" : "♥",
-      "rank" : "B"
-    }, {
-      "suit" : "♠",
-      "rank" : "9"
-    }, {
-      "suit" : "♠",
       "rank" : "A"
-    }, {
-      "suit" : "♦",
-      "rank" : "D"
-    }, {
-      "suit" : "♣",
-      "rank" : "D"
-    }, {
-      "suit" : "♣",
-      "rank" : "10"
-    }, {
-      "suit" : "♣",
-      "rank" : "B"
-    }, {
-      "suit" : "♠",
-      "rank" : "3"
-    }, {
-      "suit" : "♥",
-      "rank" : "3"
-    }, {
-      "suit" : "♣",
-      "rank" : "4"
-    }, {
-      "suit" : "♥",
-      "rank" : "10"
-    }, {
-      "suit" : "♣",
-      "rank" : "9"
-    }, {
-      "suit" : "♦",
-      "rank" : "3"
     } ],
-    "playerType" : "Human"
+    "playerType" : "Human",
+    "discardedQuartets" : [ ]
   }, {
-    "name" : "Spieler 2",
+    "name" : "Bot",
     "hand" : [ {
-      "suit" : "♠",
-      "rank" : "2"
-    }, {
-      "suit" : "♣",
-      "rank" : "A"
-    }, {
       "suit" : "♥",
-      "rank" : "5"
-    }, {
-      "suit" : "♣",
-      "rank" : "8"
-    }, {
-      "suit" : "♣",
-      "rank" : "7"
-    }, {
-      "suit" : "♥",
-      "rank" : "D"
-    }, {
-      "suit" : "♦",
-      "rank" : "7"
-    }, {
-      "suit" : "♥",
-      "rank" : "2"
-    }, {
-      "suit" : "♦",
-      "rank" : "9"
-    }, {
-      "suit" : "♠",
-      "rank" : "4"
-    }, {
-      "suit" : "♥",
-      "rank" : "A"
-    }, {
-      "suit" : "♦",
       "rank" : "10"
-    }, {
-      "suit" : "♦",
-      "rank" : "8"
-    }, {
-      "suit" : "♠",
-      "rank" : "8"
-    }, {
-      "suit" : "♥",
-      "rank" : "6"
-    }, {
-      "suit" : "♣",
-      "rank" : "3"
-    }, {
-      "suit" : "♠",
-      "rank" : "K"
     } ],
-    "playerType" : "Human"
-  }, {
-    "name" : "Spieler 3",
-    "hand" : [ {
-      "suit" : "♣",
-      "rank" : "6"
-    }, {
-      "suit" : "♥",
-      "rank" : "7"
-    }, {
-      "suit" : "♥",
-      "rank" : "4"
-    }, {
-      "suit" : "♦",
-      "rank" : "B"
-    }, {
-      "suit" : "♥",
-      "rank" : "K"
-    }, {
-      "suit" : "♠",
-      "rank" : "7"
-    }, {
-      "suit" : "♦",
-      "rank" : "K"
-    }, {
-      "suit" : "♠",
-      "rank" : "10"
-    }, {
-      "suit" : "♦",
-      "rank" : "A"
-    }, {
-      "suit" : "♦",
-      "rank" : "2"
-    }, {
-      "suit" : "♦",
-      "rank" : "4"
-    }, {
-      "suit" : "♠",
-      "rank" : "5"
-    }, {
-      "suit" : "♦",
-      "rank" : "5"
-    }, {
-      "suit" : "♣",
-      "rank" : "2"
-    } ],
-    "playerType" : "Human"
+    "playerType" : "AI",
+    "discardedQuartets" : [ ]
   } ]
 }

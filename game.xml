@@ -1,30 +1,25 @@
 <memento>
-    <discardedCards> ♥10♠6♦A </discardedCards>
-    <roundRank> 7 </roundRank>
-    <lastPlayedCards> ♥10♠6♦A </lastPlayedCards>
-    <playerCount> 3 </playerCount>
+    <discardedCards> ♦7 </discardedCards>
+    <roundRank> 10 </roundRank>
+    <lastPlayedCards> ♥10 </lastPlayedCards>
+    <playerCount> 2 </playerCount>
     <players>
         <player>
-            <name> Alex1 </name>
+            <name> Alice </name>
             <type> Human </type>
-            <hand> ♦6,♠9,♥4,♠A,♦3,♠8,♥3,♠D,♦4,♥A,♠K,♦K,♣10,♠2,♥6,♠10,♣6,♠4 </hand>
+            <hand> ♠A </hand>
         </player>
         <player>
-            <name> Luca1 </name>
-            <type> Human </type>
-            <hand> ♥2,♦B,♣8,♠B,♦8,♠5,♦10,♦9,♥D,♣K,♠7,♣9,♥9,♥8,♣5,♥5,♣A </hand>
-        </player>
-        <player>
-            <name> Patrick1 </name>
-            <type> Human </type>
-            <hand> ♣B,♥7,♦7,♦2,♣7,♥K,♣3,♣2,♣4,♠3,♣D,♦D,♦5,♥B </hand>
+            <name> Bot </name>
+            <type> AI </type>
+            <hand> ♥10 </hand>
         </player>
     </players>
-    <currentPlayerIndex> 2 </currentPlayerIndex>
+    <currentPlayerIndex> 0 </currentPlayerIndex>
     <lastPlayerIndex> 0 </lastPlayerIndex>
     <validRanks> 2,3,4,5,6,7,8,9,10,B,D,K,A </validRanks>
-    <playOrder> 2,0,1 </playOrder>
-    <turnState> Played </turnState>
-    <amountPlayed> 3 </amountPlayed>
+    <playOrder> 0,1 </playOrder>
+    <turnState> NeedsChallengeDecision </turnState>
+    <amountPlayed> 0 </amountPlayed>
     <lastAccusedIndex> 0 </lastAccusedIndex>
 </memento>

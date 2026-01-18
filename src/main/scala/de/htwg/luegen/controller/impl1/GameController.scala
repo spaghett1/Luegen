@@ -122,6 +122,8 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
 
   override def load: Unit = {
     model = fileIo.load
+    undoStack.clear()
+    redoStack.clear()
     notifyObservers()
   }
 }
