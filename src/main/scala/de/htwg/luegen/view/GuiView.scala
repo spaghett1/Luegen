@@ -445,21 +445,67 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     }
 
     pane.children.addAll(table,centerImage, stackLabel)
+
+    import de.htwg.luegen.model.impl1.Utils.TurnOrderUtils
     val players = controller.getCurrentPlayers
+
+    val visualOrder = TurnOrderUtils.mapOrderToPlayerCount(players)
+
     val centerX = 200.0
     val centerY = 150.0
     val radiusX = 160.0
     val radiusY = 120.0
 
-    players.zipWithIndex.foreach { case (p, i) =>
-      val angle = 2 * math.Pi * i / players.size
-      val px = centerX + radiusX * math.cos(angle) - 30
-      val py = centerY + radiusY * math.sin(angle)
+    val count = players.size
+
+    // Wir nutzen hier direkt allPlayers.zipWithIndex, um die logische
+    // Reihenfolge 1, 2, 3, 4... einzuhalten
+    // Wir nutzen direkt die Liste der Spieler, um die Reihenfolge 1, 2, 3, 4... einzuhalten
+    players.zipWithIndex.foreach { case (p, idx) =>
+      val count = players.size
+      val dynamicLeftOffset = math.max(0, (p.name.length - 4) * 7)
+
+      val (px, py) = idx match {
+        // --- SPIELER 1 ---
+        case 0 =>
+          if (count > 4) (130.0, 40.0) else (170.0, 40.0) // Oben Mitte/Links
+
+        // --- SPIELER 2 ---
+        case 1 =>
+          if (count <= 2) (170.0, 260.0) // Bei 2 Spielern: Gegenüber (Unten Mitte)
+          else if (count <= 4) (330.0, 140.0) // Bei 3-4 Spielern: Rechts Mitte
+          else (230.0, 40.0) // Ab 5 Spielern: Oben Rechts (Partner von P1)
+
+        // --- SPIELER 3 ---
+        case 2 =>
+          if (count <= 3) (170.0, 260.0) // Bei 3 Spielern: Unten Mitte
+          else if (count <= 4) (170.0, 260.0) // Bei 4 Spielern: Unten Mitte
+          else (330.0, 110.0) // Ab 5 Spielern: Rechts Oben
+
+        // --- SPIELER 4 ---
+        case 3 =>
+          if (count <= 4) (40.0 - dynamicLeftOffset, 140.0) // Bei 4 Spielern: Links Mitte
+          else (330.0, 180.0) // Ab 5 Spielern: Rechts Unten
+
+        // --- SPIELER 5 ---
+        case 4 => (230.0, 260.0) // Unten Rechts
+
+        // --- SPIELER 6 ---
+        case 5 => (130.0 - dynamicLeftOffset, 260.0) // Unten Links
+
+        // --- SPIELER 7 ---
+        case 6 => (40.0 - dynamicLeftOffset, 180.0) // Links Unten
+
+        // --- SPIELER 8 ---
+        case 7 => (40.0 - dynamicLeftOffset, 110.0) // Links Oben
+
+        case _ => (200.0, 150.0)
+      }
 
       val pLabel = new Label(s"${p.name} (${p.cardCount})") {
         style = if (p == controller.getCurrentPlayer)
-          "-fx-background-color: yellow; -fx-padding: 2; -fx-font-weight: bold;"
-        else "-fx-background-color: whitesmoke; -fx-padding: 2;"
+          "-fx-background-color: yellow; -fx-padding: 2; -fx-font-weight: bold; -fx-text-fill: black;"
+        else "-fx-background-color: whitesmoke; -fx-padding: 2; -fx-text-fill: black;"
         layoutX = px
         layoutY = py
       }
