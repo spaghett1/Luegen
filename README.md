@@ -1,11 +1,11 @@
-[![Coverage Status](https://coveralls.io/repos/github/spaghett1/Luegen/badge.svg?branch=main)](https://coveralls.io/github/spaghett1/Luegen?branch=main)
+<a href='https://coveralls.io/github/spaghett1/Luegen?branch=main'><img src='https://coveralls.io/repos/github/spaghett1/Luegen/badge.svg?branch=main' alt='Coverage Status' /></a>
 
 <p align="center">
   <img src="src/main/resources/images/Gemini_Generated_Image_julotcjulotcjulo.png" alt="Logo Lügen" width="500"/>
 </p>
 
 This is a scala project about the famous card game "Luegen".
-To try it out, clone the repo and type 'sbt run' to start a gui version and a tui version in parallel.
+To try it out, clone the repo and type 'docker run -ti luegen-game' to start a gui version and a tui version in parallel.
 
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
