@@ -4,8 +4,19 @@
   <img src="src/main/resources/images/Gemini_Generated_Image_julotcjulotcjulo.png" alt="Logo Lügen" width="500"/>
 </p>
 
-This is a scala project about the famous card game "Luegen".
-To try it out, clone the repo and type 'docker run -ti luegen-game' to start a gui version and a tui version in parallel.
+This is a scala project about the card game "Luegen".
+To try it out,
+
+1. Clone the repo.
+2. Build the image:
+    ```sh
+    docker build -t luegen .
+    ```
+3. Run the docker:
+    ```sh
+    docker run -ti luegen
+    ```
+4. Enjoy!!!
 
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
