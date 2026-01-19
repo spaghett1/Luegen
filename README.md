@@ -5,7 +5,7 @@
 </p>
 
 This is a scala project about the famous card game "Luegen".
-To try it out, clone the repo and type 'sbt run' to start a gui version and a tui version in parallel.
+To try it out, clone the repo and type 'docker run -ti luegen-game' to start a gui version and a tui version in parallel.
 
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
