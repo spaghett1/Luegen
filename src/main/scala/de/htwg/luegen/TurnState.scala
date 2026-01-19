@@ -17,7 +17,7 @@ enum TurnState {
 
 object TurnState {
   import play.api.libs.json._
-  implicit val tunStateFormat: Format[TurnState] = new Format[TurnState] {
+  implicit val turnStateFormat: Format[TurnState] = new Format[TurnState] {
     override def reads(json: JsValue): JsResult[TurnState] = json.asOpt[String] match {
       case Some(name) =>
         try {

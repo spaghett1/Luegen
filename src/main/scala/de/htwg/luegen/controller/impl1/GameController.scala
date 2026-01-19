@@ -61,7 +61,7 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
         model
     }
   }
-  
+
   override def initGame(): IGameModel = {
     notifyObservers()
     model
@@ -86,7 +86,7 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
   override def handleChallengeDecision(decision: Boolean): IGameModel = {
     executeCommand(HandleChallengeDecisionCommand(decision))
   }
-  
+
   override def setNextPlayer(): IGameModel = {
     executeCommand(SetNextPlayerCommand())
   }
@@ -102,18 +102,31 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
   }
 
   override def getPlayerCount = model.getPlayerCount
+
   override def getCurrentPlayers = model.getPlayers
+
   override def getDiscardedCount = model.getDiscardedCards.length
+
   override def getCurrentPlayer = model.getPlayers(model.getCurrentPlayerIndex)
+
   override def getCurrentPlayerType = model.getPlayers(model.getCurrentPlayerIndex).playerType
+
   override def getPrevPlayer = model.getPrevPlayer
+
   override def getIsFirstTurn = model.isFirstTurn
+
   override def isValidRanks = model.getValidRanks
+
   override def getRoundRank = model.getRoundRank
+
   override def getTurnState = model.getTurnState
+
   override def getPlayedCards = model.getPlayedCards
+
   override def getInputError = model.getLastInputError
+
   override def getLog = model.getLogHistory
+
   override def getAllDiscardedQuartets = model.getPlayers.flatMap(_.discardedQuartets).distinct
 
   override def save: Unit = {
@@ -127,5 +140,7 @@ class GameController(using private var model: IGameModel, fileIo: IFileIO) exten
     redoStack.clear()
     notifyObservers()
   }
+
+  def setModel(newModel: IGameModel): Unit = this.model = newModel
 }
  

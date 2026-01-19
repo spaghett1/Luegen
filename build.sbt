@@ -34,5 +34,5 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     coverageEnabled := true,
     coverageHighlighting := true,
-    coverageExcludedPackages := ".*de\\.htwg\\.luegen\\.view\\.GuiView.*;.*de\\.htwg\\.luegen\\.view\\.GameView.*"
+    coverageExcludedFiles := ".*src/main/scala/de/htwg/luegen/view/GuiView.scala"
   )

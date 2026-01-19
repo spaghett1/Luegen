@@ -21,7 +21,6 @@ import scalafx.geometry.Side
 
 import java.io.InputStream
 
-// $COVERAGE-OFF$
 class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
   private var statusLabel: Label = _
@@ -530,4 +529,3 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     }
   }
 }
-// $COVERAGE-ON$
