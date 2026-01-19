@@ -5,14 +5,24 @@ RUN apt-get update && apt-get install -y \
     libglu1-mesa \
     libxxf86vm1 \
     libasound2 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
+
+ENV DISPLAY=host.docker.internal:0
+ENV JAVA_OPTS="-Dprism.order=sw"
+ENV LIBGL_ALWAYS_INDIRECT=true
+
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+RUN rm -rf /root/.openjfx/cache
 
 WORKDIR /app
 COPY . /app
 
 RUN sbt compile
-
-ENV DISPLAY=host.docker.internal:0
-ENV JAVA_OPTS="-Dprism.order=sw"
 
 CMD ["sbt", "-Dprism.order=sw", "run"]

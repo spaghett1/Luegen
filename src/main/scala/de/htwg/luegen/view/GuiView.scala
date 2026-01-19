@@ -462,42 +462,33 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     // Reihenfolge 1, 2, 3, 4... einzuhalten
     // Wir nutzen direkt die Liste der Spieler, um die Reihenfolge 1, 2, 3, 4... einzuhalten
     players.zipWithIndex.foreach { case (p, idx) =>
-      val count = players.size
+      // Offset für Namen an der linken Kante (Spieler 7 und 3)
       val dynamicLeftOffset = math.max(0, (p.name.length - 4) * 7)
 
       val (px, py) = idx match {
-        // --- SPIELER 1 ---
-        case 0 =>
-          if (count > 4) (130.0, 40.0) else (170.0, 40.0) // Oben Mitte/Links
+        // --- OBEN: Links die 1 (idx 0), rechts die 5 (idx 4) ---
+        case 0 => // Spieler 1
+          if (count > 4) (130.0, 40.0) else (170.0, 40.0)
+        case 4 => // Spieler 5
+          (230.0, 40.0)
 
-        // --- SPIELER 2 ---
-        case 1 =>
-          if (count <= 2) (170.0, 260.0) // Bei 2 Spielern: Gegenüber (Unten Mitte)
-          else if (count <= 4) (330.0, 140.0) // Bei 3-4 Spielern: Rechts Mitte
-          else (230.0, 40.0) // Ab 5 Spielern: Oben Rechts (Partner von P1)
+        // --- RECHTS: Oben die 4 (idx 3), unten die 8 (idx 7) ---
+        case 3 => // Spieler 4
+          if (count > 7) (330.0, 110.0) else (330.0, 140.0)
+        case 7 => // Spieler 8
+          (330.0, 180.0)
 
-        // --- SPIELER 3 ---
-        case 2 =>
-          if (count <= 3) (170.0, 260.0) // Bei 3 Spielern: Unten Mitte
-          else if (count <= 4) (170.0, 260.0) // Bei 4 Spielern: Unten Mitte
-          else (330.0, 110.0) // Ab 5 Spielern: Rechts Oben
+        // --- UNTEN: Rechts die 6 (idx 5), links die 2 (idx 1) ---
+        case 5 => // Spieler 6
+          if (count > 5) (230.0, 260.0) else (170.0, 260.0)
+        case 1 => // Spieler 2
+          (130.0, 260.0)
 
-        // --- SPIELER 4 ---
-        case 3 =>
-          if (count <= 4) (40.0 - dynamicLeftOffset, 140.0) // Bei 4 Spielern: Links Mitte
-          else (330.0, 180.0) // Ab 5 Spielern: Rechts Unten
-
-        // --- SPIELER 5 ---
-        case 4 => (230.0, 260.0) // Unten Rechts
-
-        // --- SPIELER 6 ---
-        case 5 => (130.0 - dynamicLeftOffset, 260.0) // Unten Links
-
-        // --- SPIELER 7 ---
-        case 6 => (40.0 - dynamicLeftOffset, 180.0) // Links Unten
-
-        // --- SPIELER 8 ---
-        case 7 => (40.0 - dynamicLeftOffset, 110.0) // Links Oben
+        // --- LINKS: Oben die 3 (idx 2), unten die 7 (idx 6) ---
+        case 2 => // Spieler 3
+          if (count > 6) (40.0 - dynamicLeftOffset, 110.0) else (40.0 - dynamicLeftOffset, 140.0)
+        case 6 => // Spieler 7
+          (40.0 - dynamicLeftOffset, 180.0)
 
         case _ => (200.0, 150.0)
       }
