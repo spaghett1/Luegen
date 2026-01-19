@@ -25,7 +25,7 @@ Any player (except the starting player) during their turn can call the lie of th
 
 If the previous player lied, all discarded Cards this round are added to their hand. Then, the player calling the lie (the current player) can set a new rank for the round and play their cards.
 
-If the previous player told the truth, the player calling the lie draws all discarded cards. Then, the next player can set a rank for the round and play their cards.
+If the previous player told the truth, the player calling the lie draws all discarded cards. Then, the next player (the player after the current player) can set a rank for the round and play their cards.
 
 If a player has all four cards of any rank, the cards will be removed from the game (the cards not in the game anymore will be shown on the left side of the screen). This is because if a player has all four, all other players would have to lie, giving the player with all four an unfair advantage.
 
