@@ -1,11 +1,14 @@
 // 1. Logik zur Bestimmung des Betriebssystems (muss AUSSERHALB von .settings stehen)
 val osName = System.getProperty("os.name").toLowerCase
+val osArch = System.getProperty("os.arch").toLowerCase
+
 val javafxClassifier = osName match {
   case n if n.contains("win") => "win"
   case n if n.contains("mac") =>
     if (System.getProperty("os.arch") == "aarch64") "mac-aarch64" else "mac"
-  case n if n.contains("nux") => "linux"
-  case _ => "Fehler" // Fallback
+  case n if n.contains("nux") =>
+    if (osArch == "aarch64") "linux-aarch64" else "linux"
+  case _ => "linux" // Fallback
 }
 
 lazy val root = (project in file("."))
