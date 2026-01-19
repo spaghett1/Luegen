@@ -13,17 +13,11 @@ object Game {
 
     val controller = summon[IGameController]
     val tui = new GameView()
-    val gui = new GuiView()
 
-    // Wir lagern ALLES, was blockiert oder rechnet, in den Thread aus
+
     val gameLogicThread = new Thread(() => {
-      // 1. Erst das Spiel initialisieren
       controller.initGame()
-
-      // 2. Kurz warten, bis das Fenster der GUI wirklich da ist
       Thread.sleep(200)
-
-      // 3. Dann die TUI-Eingabeschleife starten
       while (true) {
         tui.handleInput()
       }
@@ -32,6 +26,7 @@ object Game {
     gameLogicThread.start()
 
     try {
+      val gui = new GuiView()
       gui.main(Array.empty)
     } catch {
       case e: Throwable =>

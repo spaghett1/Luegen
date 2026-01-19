@@ -1,18 +1,18 @@
-FROM hseeberger/scala-sbt:17.0.2_1.6.2_3.1.1
-
-WORKDIR /app
+FROM sbtscala/scala-sbt:eclipse-temurin-jammy-17.0.10_7_1.9.9_3.3.3
 
 RUN apt-get update && apt-get install -y \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libxext6 \
+    libgtk-3-0 \
+    libglu1-mesa \
     libxxf86vm1 \
-    libgl1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /app
 COPY . /app
 
 RUN sbt compile
 
-CMD ["sbt", "run"]
+ENV DISPLAY=host.docker.internal:0
+ENV JAVA_OPTS="-Dprism.order=sw"
+
+CMD ["sbt", "-Dprism.order=sw", "run"]
