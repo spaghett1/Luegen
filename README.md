@@ -10,7 +10,7 @@ To try it out, clone the repo and type 'sbt run' to start a gui version and a tu
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
 
-For any input request, the user can type 'undo' and 'redo', do undo and redo the most recent command. For undo, there must be at least one completed command. For redo, there must be at least one undid command.
+For any input request, the user can type 'undo' and 'redo', to undo and redo the most recent command. For undo, there must be at least one completed command. For redo, there must be at least one undid command.
 
 For the gui version:
 The 'save', 'load', 'undo', and 'redo' options can be found in the top left drop-down menu, as well as a quit button.
