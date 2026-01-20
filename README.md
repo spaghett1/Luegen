@@ -28,9 +28,9 @@ The 'save', 'load', 'undo', and 'redo' options can be found in the top left drop
 
 Luegen Rules:
 A whole 52 card deck is dealt evenly to the players.
-The first person decides a rank for the round that all players must play.
-The player can play one or up to three cards of that rank. Then, the next player has their turn.
-If a player doesnt have the specified rank, they can lie (claiming they still played the specified rank) and play up to three cards he desires.
+The first person decides a rank for the round that all players play (or claim to play).
+The player can play one or up to three cards of any rank, claiming he played the specified rank. Then, the next player has their turn.
+If a player doesnt have the specified rank, they can lie (claiming they still played the specified rank) and play up to three cards they desire.
 
 Any player (except the starting player) during their turn can call the lie of the previous player, revealing the last played cards. 
 
