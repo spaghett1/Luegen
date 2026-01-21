@@ -17,7 +17,8 @@ case class GameModel(
   players: List[Player] = List.empty,
   currentPlayerIndex: Int = 0,
   lastPlayerIndex: Int = 0,
-  validRanks: List[String] = List("2","3","4","5","6","7","8","9","10","B","D","K","A"),
+  validRanks: List[String] =
+    List("2","3","4","5","6","7","8","9","10","B","D","K","A"),
   playOrder: List[Int] = List.empty,
   turnState: TurnState = NeedsPlayerCount,
   amountPlayed: Int = 0,
