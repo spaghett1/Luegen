@@ -3,6 +3,8 @@ package de.htwg.luegen.model.impl1
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 import de.htwg.luegen.TurnState
+import de.htwg.luegen.TurnState.{ChallengedLieLost, ChallengedLieWon}
+import de.htwg.luegen.model.impl1.PlayerType.Human
 
 class GameModelSpec extends AnyWordSpec with Matchers {
 
@@ -86,6 +88,45 @@ class GameModelSpec extends AnyWordSpec with Matchers {
       val restored = GameModel().restoreMemento(memento)
       restored.getPlayers shouldBe model.getPlayers
       restored.getTurnState shouldBe model.getTurnState
+    }
+
+    "correctly decide winning player" in {
+      val player = Player("Alice", List(), Human)
+      val model = GameModel().copy(players = List(player))
+      val newModel = model.setNextPlayer()
+      newModel.getLastInputError shouldBe Some("GEWONNEN: Alice hat keine Karten mehr und gewonnen!")
+    }
+
+    "correctly decide losing player" in {
+      val player = Player("Bob", List(Card("1", "D"), Card("2", "D"), Card("3", "D"), Card("4", "D")), Human)
+      val model = GameModel().copy(players = List(player))
+      val newModel = model.setNextPlayer()
+      newModel.getLastInputError shouldBe Some("GAME OVER: Bob hat 4 Damen und verloren!")
+    }
+
+    val player = Player("Alice", List(Card("1", "B"), Card("2", "B"), Card("3", "B"), Card("4", "B"), Card("5", "D")))
+
+    "correctly set next Player for empty playOrder" in {
+      val model1 = GameModel().copy(playOrder = Nil, players = List(player), currentPlayerIndex = 0)
+      val playerIndex = model1.getCurrentPlayerIndex
+      val testModel = model1.setNextPlayer()
+      testModel.getPlayers(playerIndex).name shouldBe player.name
+      testModel.getPlayers(playerIndex).discardedQuartets should contain ("B")
+    }
+
+    "correctly set next Player for ChallengedLieWon case" in {
+      val model = GameModel().copy(players = List(player), turnState = ChallengedLieWon).setNextPlayer()
+      model.getRoundRank shouldBe ""
+      model.getPlayers(model.getCurrentPlayerIndex).name shouldBe player.name
+    }
+
+    "correctly set next player for ChallengedLieLost case" in {
+      val testPlayer = Player("Bob")
+      val model = GameModel().copy(playOrder = List(0, 1), players = List(player, testPlayer), turnState = ChallengedLieLost, currentPlayerIndex = 0)
+      val currentPlayerIndex = model.currentPlayerIndex
+      println(model.currentPlayerIndex)
+      val testModel = model.setNextPlayer()
+      testModel.getRoundRank shouldBe ""
     }
   }
 }

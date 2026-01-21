@@ -1,25 +1,14 @@
 <memento>
-    <discardedCards> ♦7 </discardedCards>
-    <roundRank> 10 </roundRank>
-    <lastPlayedCards> ♥10 </lastPlayedCards>
-    <playerCount> 2 </playerCount>
-    <players>
-        <player>
-            <name> Alice </name>
-            <type> Human </type>
-            <hand> ♠A </hand>
-        </player>
-        <player>
-            <name> Bot </name>
-            <type> AI </type>
-            <hand> ♥10 </hand>
-        </player>
-    </players>
+    <discardedCards> </discardedCards>
+    <roundRank> </roundRank>
+    <lastPlayedCards> </lastPlayedCards>
+    <playerCount> 0 </playerCount>
+    <players> </players>
     <currentPlayerIndex> 0 </currentPlayerIndex>
     <lastPlayerIndex> 0 </lastPlayerIndex>
-    <validRanks> 2,3,4,5,6,7,8,9,10,B,D,K,A </validRanks>
-    <playOrder> 0,1 </playOrder>
-    <turnState> NeedsChallengeDecision </turnState>
+    <validRanks> </validRanks>
+    <playOrder> </playOrder>
+    <turnState> NeedsPlayerCount </turnState>
     <amountPlayed> 0 </amountPlayed>
     <lastAccusedIndex> 0 </lastAccusedIndex>
 </memento>

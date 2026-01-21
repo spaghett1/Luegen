@@ -66,5 +66,15 @@ class FileIOSpec extends AnyWordSpec with Matchers {
       loaded.getPlayerCount shouldBe originalModel.getPlayerCount
       loaded.getPlayedCards shouldBe originalModel.getPlayedCards
     }
+
+    "save and load via XML with emtpy model" in {
+      val xmlIO = new XmlIO
+      val model = GameModel()
+      val testModel = model.copy(validRanks = Nil)
+      xmlIO.save(testModel)
+      val loaded = xmlIO.load
+
+      loaded.getValidRanks shouldBe Nil
+    }
   }
 }

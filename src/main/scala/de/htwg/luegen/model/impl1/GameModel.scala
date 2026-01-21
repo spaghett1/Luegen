@@ -131,21 +131,23 @@ case class GameModel(
 
   override def setNextPlayer(): IGameModel = {
     val updatedPlayers = players.map(p => p.discardQuartets()._1)
+
+    val loserOpt = updatedPlayers.find(_.discardedQuartets.contains("D"))
+
+    if (loserOpt.isDefined) {
+      return this.copy(
+        players = updatedPlayers,
+        turnState = TurnState.GameOver,
+        lastInputError = Some(s"GAME OVER: ${loserOpt.get.name} hat 4 Damen und verloren!")
+      )
+    }
+
     val winnerOpt = updatedPlayers.find(_.hand.isEmpty)
     if (winnerOpt.isDefined) {
       return this.copy(
         players = updatedPlayers,
         turnState = TurnState.GameOver,
         lastInputError = Some(s"GEWONNEN: ${winnerOpt.get.name} hat keine Karten mehr und gewonnen!")
-      )
-    }
-
-    val loserOpt = updatedPlayers.find(_.discardedQuartets.contains("D"))
-    if (loserOpt.isDefined) {
-      return this.copy(
-        players = updatedPlayers,
-        turnState = TurnState.GameOver,
-        lastInputError = Some(s"GAME OVER: ${loserOpt.get.name} hat 4 Damen und verloren!")
       )
     }
     val lastState = turnState
