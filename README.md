@@ -11,7 +11,7 @@ To try it out,
    ```sh
    git clone https://github.com/spaghett1/Luegen
    cd Luegen
-   ```sh
+   ```
 3. Build the image:
     ```sh
     docker build -t luegen .
