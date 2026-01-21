@@ -27,6 +27,15 @@ class PlayerSpec extends AnyWordSpec with Matchers {
       import de.htwg.luegen.model.impl1.Player.playerFormat
       val json = Json.toJson(player) (playerFormat)
       (json \ "name").as[String] shouldBe "TestBot"
+
+      val jsonObj = Json.obj(
+        "name" -> "Alice"
+      )
+
+      val result = jsonObj.validate[Player]
+      result.isSuccess shouldBe true
+      val p = result.get
+      p.name shouldBe "Alice"
     }
   }
 }
