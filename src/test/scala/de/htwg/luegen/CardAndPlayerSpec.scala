@@ -19,7 +19,7 @@ class CardSpec extends AnyWordSpec with Matchers {
 class PlayerSpec extends AnyWordSpec with Matchers {
   "A Player" should {
     val hand = List(Card("♥", "A"), Card("♦", "7"))
-    val player = Player("TestBot", hand, Human)
+    val player = Player("TestBot", hand, Human, List("D"))
     "have a name" in { player.name should be("TestBot") }
     "have cards" in { player.hand should be(hand) }
     "report correct card count" in { player.cardCount should be(2) }
@@ -28,14 +28,13 @@ class PlayerSpec extends AnyWordSpec with Matchers {
       val json = Json.toJson(player) (playerFormat)
       (json \ "name").as[String] shouldBe "TestBot"
 
-      val jsonObj = Json.obj(
-        "name" -> "Alice"
-      )
-
-      val result = jsonObj.validate[Player]
+      val result = json.validate[Player]
       result.isSuccess shouldBe true
       val p = result.get
-      p.name shouldBe "Alice"
+      p.name shouldBe "TestBot"
+      p.playerType shouldBe Human
+      p.hand shouldBe hand
+      p.discardedQuartets shouldBe List("D")
     }
   }
 }
