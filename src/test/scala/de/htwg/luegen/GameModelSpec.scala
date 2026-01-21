@@ -49,6 +49,9 @@ class GameModelSpec extends AnyWordSpec with Matchers {
       updated.getDiscardedCards.size shouldBe 1
     }
 
+    val player1 = Player("Alice", List(Card("A", "10"), Card("B", "K")))
+    val player2 = Player("Bob", List(Card("C", "8"), Card("D", "9")))
+
     "process a challenge decision (no lie)" in {
       val setup = model.setPlayerCount(2)
         .setupPlayers(List("P1", "P2"))
@@ -62,16 +65,22 @@ class GameModelSpec extends AnyWordSpec with Matchers {
     }
 
     "process a challenge decision (lie check)" in {
-      val setup = model.setPlayerCount(2)
-        .setupPlayers(List("P1", "P2"))
-        .dealCards()
+      val setup = model.copy(players = List(player1, player2), currentPlayerIndex = 0, playOrder = List(0, 1))
         .setupRank("A")
         .playCards(List(1))
 
       // P2 deckt auf (Challenge = true)
-      val updated = setup.playerTurn(true)
+      val updated = setup.setNextPlayer().playerTurn(true)
       // Der Zustand sollte sich zu ChallengedLieWon oder ChallengedLieLost ändern
       List(TurnState.ChallengedLieWon, TurnState.ChallengedLieLost) should contain (updated.getTurnState)
+    }
+
+    "process a challenge decision (Player lied)" in {
+      val setup = model.copy(players = List(player1, player2), currentPlayerIndex = 0, playOrder = List(0, 1))
+        .setupRank("A")
+        .playCards(List(2))
+      val updated = setup.setNextPlayer().playerTurn(true)
+      updated.getTurnState shouldBe ChallengedLieWon
     }
 
     "handle errors correctly" in {
@@ -105,9 +114,10 @@ class GameModelSpec extends AnyWordSpec with Matchers {
     }
 
     val player = Player("Alice", List(Card("1", "B"), Card("2", "B"), Card("3", "B"), Card("4", "B"), Card("5", "D")))
+    val testPlayer = Player("Bob", List(Card("A", "K"), Card("B", "D")))
 
     "correctly set next Player for empty playOrder" in {
-      val model1 = GameModel().copy(playOrder = Nil, players = List(player), currentPlayerIndex = 0)
+      val model1 = GameModel().copy(playOrder = Nil, players = List(player, testPlayer), currentPlayerIndex = 0)
       val playerIndex = model1.getCurrentPlayerIndex
       val testModel = model1.setNextPlayer()
       testModel.getPlayers(playerIndex).name shouldBe player.name
@@ -115,18 +125,18 @@ class GameModelSpec extends AnyWordSpec with Matchers {
     }
 
     "correctly set next Player for ChallengedLieWon case" in {
-      val model = GameModel().copy(players = List(player), turnState = ChallengedLieWon).setNextPlayer()
+      val model = GameModel().copy(players = List(player, testPlayer), playOrder = List(0,1), turnState = ChallengedLieWon).setNextPlayer()
       model.getRoundRank shouldBe ""
       model.getPlayers(model.getCurrentPlayerIndex).name shouldBe player.name
     }
 
     "correctly set next player for ChallengedLieLost case" in {
-      val testPlayer = Player("Bob")
       val model = GameModel().copy(playOrder = List(0, 1), players = List(player, testPlayer), turnState = ChallengedLieLost, currentPlayerIndex = 0)
       val currentPlayerIndex = model.currentPlayerIndex
       println(model.currentPlayerIndex)
       val testModel = model.setNextPlayer()
       testModel.getRoundRank shouldBe ""
+      testModel.getCurrentPlayerIndex should not be currentPlayerIndex
     }
   }
 }
