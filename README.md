@@ -7,16 +7,20 @@
 This is a scala project about the card game "Luegen".
 To try it out,
 
-1. Clone the repo.
-2. Build the image:
+1. Clone the repo:
+   ```sh
+   git clone https://github.com/spaghett1/Luegen
+   cd Luegen
+   ```sh
+3. Build the image:
     ```sh
     docker build -t luegen .
     ```
-3. Run the docker:
+4. Run the docker:
     ```sh
     docker run -ti luegen
     ```
-4. Enjoy!!!
+5. Enjoy!!!
 
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
