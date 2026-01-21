@@ -24,17 +24,17 @@ class PlayerSpec extends AnyWordSpec with Matchers {
     "have cards" in { player.hand should be(hand) }
     "report correct card count" in { player.cardCount should be(2) }
     "have correct json representation" in {
-      import de.htwg.luegen.model.impl1.Player.playerFormat
-      val json = Json.toJson(player) (playerFormat)
+      val format = de.htwg.luegen.model.impl1.Player.playerFormat
+
+      // Expliziter Aufruf der Writes-Logik
+      val json = format.writes(player)
+
       (json \ "name").as[String] shouldBe "TestBot"
 
-      val result = json.validate[Player]
+      // Expliziter Aufruf der Reads-Logik
+      val result = format.reads(json)
       result.isSuccess shouldBe true
-      val p = result.get
-      p.name shouldBe "TestBot"
-      p.playerType shouldBe Human
-      p.hand shouldBe hand
-      p.discardedQuartets shouldBe List("D")
+      result.get shouldBe player
     }
   }
 }
