@@ -15,5 +15,5 @@ lazy val root = (project in file("."))
     Test / parallelExecution := false,
     coverageEnabled := true,
     coverageHighlighting := true,
-    coverageExcludedFiles := ".*GuiView"
+    coverageExcludedFiles := ".*[/\\]GuiView"
   )
