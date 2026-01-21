@@ -21,6 +21,13 @@ To try it out,
     docker run -ti luegen
     ```
 5. Enjoy!!!
+6.  If Docker does not run, then try:
+   ```sh
+   sbt compile
+   ```
+   ```sh
+   sbt run
+   ```
 
 For the tui version:
 For any input request, the user can type 'save' and 'load' to save and load the game state into an xml file. So, to load a savefile, the user has to start the game and then type 'load' to load it.
