@@ -14,22 +14,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           java-version: '21'
           distribution: 'temurin'
-
       - name: Install sbt
         uses: coursier/setup-action@v1
         with:
           apps: sbt
-
       - name: Cache SBT dependencies
         uses: actions/cache@v3
         with:
@@ -37,12 +33,10 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
-
       - name: Run tests and coverage
         run: sbt clean coverage test coverageReport
         env:
           JAVA_TOOL_OPTIONS: "-Djava.awt.headless=true"
-
       - name: Upload coverage to Coveralls
         run: sbt coveralls
         env:

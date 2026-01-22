@@ -463,7 +463,7 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
     // Wir nutzen direkt die Liste der Spieler, um die Reihenfolge 1, 2, 3, 4... einzuhalten
     players.zipWithIndex.foreach { case (p, idx) =>
       // Offset für Namen an der linken Kante (Spieler 7 und 3)
-      val dynamicLeftOffset = math.max(0, (p.name.length - 4) * 7)
+      val dynamicLeftOffset = math.max(0, (p.name.length - 2) * 7)
 
       val (px, py) = idx match {
         // --- OBEN: Links die 1 (idx 0), rechts die 5 (idx 4) ---
@@ -480,13 +480,13 @@ class GuiView(using controller: IGameController) extends JFXApp3 with Observer {
 
         // --- UNTEN: Rechts die 6 (idx 5), links die 2 (idx 1) ---
         case 5 => // Spieler 6
-          if (count > 5) (230.0, 260.0) else (170.0, 260.0)
+          (130.0, 240.0)
         case 1 => // Spieler 2
-          (130.0, 260.0)
+          if (count > 5) (230.0, 240.0) else (170.0, 240.0)
 
         // --- LINKS: Oben die 3 (idx 2), unten die 7 (idx 6) ---
         case 2 => // Spieler 3
-          if (count > 6) (40.0 - dynamicLeftOffset, 110.0) else (40.0 - dynamicLeftOffset, 140.0)
+          if (count > 7) (40.0 - dynamicLeftOffset, 110.0) else (40.0 - dynamicLeftOffset, 140.0)
         case 6 => // Spieler 7
           (40.0 - dynamicLeftOffset, 180.0)
 
